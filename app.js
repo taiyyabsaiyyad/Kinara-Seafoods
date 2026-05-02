@@ -3,6 +3,9 @@ const UPI_NAME = typeof KINARA_CONFIG !== 'undefined' ? KINARA_CONFIG.UPI_NAME :
 const WA_NUMBER = typeof KINARA_CONFIG !== 'undefined' ? KINARA_CONFIG.WA_NUMBER : '917045528239';
 const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do";
 
+const HOTEL_COORDS = { lat: 19.033, lng: 73.016 }; // Nerul Sector 20
+const DELIVERY_RATE = 20; // Rs per KM after 1km free
+
 let cart = JSON.parse(localStorage.getItem('kinara_cart') || '[]');
 let orders = JSON.parse(localStorage.getItem('kinara_orders') || '[]');
 let currentCategory = 'All';
@@ -11,6 +14,8 @@ let paymentMethod = 'COD';
 let isVegOnly = false;
 let isSSShared = false;
 let userCoords = null;
+let map = null;
+let historyMap = null;
 
 // Initialize the app
 function init() {
@@ -45,24 +50,52 @@ function init() {
     window.switchTab = switchTab;
     window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
     window.detectLocation = detectLocation;
+    window.openTracking = openTracking;
+    window.closeTracking = closeTracking;
 }
 
 document.addEventListener('DOMContentLoaded', init);
 
 function switchTab(tab) {
+    const homeBtn = document.getElementById('nav-home');
+    const ordersBtn = document.getElementById('nav-orders');
+    
+    // Reset states
+    homeBtn.classList.replace('text-primary', 'text-stone-400');
+    ordersBtn.classList.replace('text-primary', 'text-stone-400');
+    homeBtn.querySelector('.bg-primary')?.classList.add('hidden');
+    ordersBtn.querySelector('.bg-primary')?.classList.add('hidden');
+
     if (tab === 'home') {
         closeCart();
         closeOrders();
         closeProfile();
         scrollToTop();
+        homeBtn.classList.replace('text-stone-400', 'text-primary');
+        homeBtn.querySelector('.bg-primary')?.classList.remove('hidden');
     } else if (tab === 'orders') {
         openOrders();
+        ordersBtn.classList.replace('text-stone-400', 'text-primary');
+        ordersBtn.querySelector('.bg-primary')?.classList.remove('hidden');
     }
 }
 
 function scrollToTop() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
+
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+              Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+              Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+}
+
+function deg2rad(deg) { return deg * (Math.PI / 180); }
 
 function toggleVegOnly() {
     isVegOnly = !isVegOnly;
@@ -85,75 +118,88 @@ function setPaymentMethod(method) {
     const paymentSection = document.getElementById('payment-section');
     const placeBtn = document.getElementById('place-order-btn');
 
+    // Reset styles
+    [codBtn, onlineBtn].forEach(btn => {
+        btn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
+        btn.classList.add('text-stone-400');
+    });
+
     if (method === 'COD') {
-        codBtn.classList.add('border-primary', 'bg-red-50', 'text-primary');
-        codBtn.classList.remove('border-stone-100', 'text-stone-500');
-        onlineBtn.classList.add('border-stone-100', 'text-stone-500');
-        onlineBtn.classList.remove('border-primary', 'bg-red-50', 'text-primary');
+        codBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+        codBtn.classList.remove('text-stone-400');
         paymentSection.classList.add('hidden');
         placeBtn.classList.remove('hidden');
     } else {
-        onlineBtn.classList.add('border-primary', 'bg-red-50', 'text-primary');
-        onlineBtn.classList.remove('border-stone-100', 'text-stone-500');
-        codBtn.classList.add('border-stone-100', 'text-stone-500');
-        codBtn.classList.remove('border-primary', 'bg-red-50', 'text-primary');
+        onlineBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
+        onlineBtn.classList.remove('text-stone-400');
         
-        const total = cart.reduce((acc, item) => acc + (getPrice(item.price) * item.qty), 0);
-        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${total}&cu=INR&tn=KinaraOrder`;
+        const { grandTotal } = calculateCartTotals();
+        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${grandTotal}&cu=INR&tn=KinaraOrder`;
         document.getElementById('upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUrl)}`;
         
         paymentSection.classList.remove('hidden');
         placeBtn.classList.add('hidden');
         
-        // Reset SS toggle
         isSSShared = false;
         const ssBtn = document.getElementById('ss-toggle-btn');
         const finalBtn = document.getElementById('final-confirm-btn');
         if(ssBtn) {
-            ssBtn.classList.remove('bg-green-600');
-            ssBtn.classList.add('bg-orange-500');
-            ssBtn.textContent = 'Screenshot Shared?';
+            ssBtn.classList.remove('bg-green-600', 'text-white');
+            ssBtn.textContent = 'I have shared the SS';
         }
         if(finalBtn) finalBtn.classList.add('hidden');
     }
+}
+
+function calculateCartTotals() {
+    const itemTotal = cart.reduce((acc, item) => acc + (getPrice(item.price) * item.qty), 0);
+    let deliveryFee = 0;
+    let distance = 0;
+
+    if (userCoords) {
+        distance = calculateDistance(HOTEL_COORDS.lat, HOTEL_COORDS.lng, userCoords.lat, userCoords.lng);
+        if (distance > 1) {
+            deliveryFee = Math.ceil((distance - 1) * DELIVERY_RATE);
+        }
+    }
+    
+    return { itemTotal, deliveryFee, grandTotal: itemTotal + deliveryFee, distance };
 }
 
 function shareOnWhatsApp() {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
     if (!profile.name || !profile.phone) { showToast('Complete profile first'); openProfile(); return; }
     
-    const total = cart.reduce((acc, item) => acc + (getPrice(item.price) * item.qty), 0);
-    const orderId = Math.floor(1000 + Math.random() * 9000); // Temp ID for reference
+    const { grandTotal } = calculateCartTotals();
+    const orderId = Math.floor(1000 + Math.random() * 9000);
     
     let msg = `*PAYMENT VERIFICATION - KINARA SEA FOOD*\n*Ref ID:* #${orderId}\n*Status:* PAYING ONLINE\n\n*Customer:* ${profile.name}\n\n*ITEMS:*\n`;
-    cart.forEach(item => {
-        msg += `• ${item.name} x ${item.qty}\n`;
-    });
-    msg += `\n*TOTAL: ₹${total}*\n\n_I am sharing the payment screenshot now..._`;
+    cart.forEach(item => { msg += `• ${item.name} x ${item.qty}\n`; });
+    msg += `\n*TOTAL: ₹${grandTotal}*\n\n_I am sharing the payment screenshot now..._`;
     
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-    showToast('Shared on WhatsApp. Now confirm below.');
 }
 
 function toggleSSShared() {
     isSSShared = !isSSShared;
     const btn = document.getElementById('ss-toggle-btn');
     const finalBtn = document.getElementById('final-confirm-btn');
-    
     if (isSSShared) {
-        btn.classList.replace('bg-orange-500', 'bg-green-600');
-        btn.textContent = 'SS SHARED - DONE';
+        btn.classList.add('bg-green-600', 'text-white', 'border-green-500');
+        btn.classList.remove('bg-white/5', 'text-white/60', 'border-white/10');
+        btn.textContent = 'SCREENSHOT SHARED - DONE';
         finalBtn.classList.remove('hidden');
     } else {
-        btn.classList.replace('bg-green-600', 'bg-orange-500');
-        btn.textContent = 'Screenshot Shared?';
+        btn.classList.remove('bg-green-600', 'text-white', 'border-green-500');
+        btn.classList.add('bg-white/5', 'text-white/60', 'border-white/10');
+        btn.textContent = 'I have shared the SS';
         finalBtn.classList.add('hidden');
     }
 }
 
 function confirmOnlineOrder() {
     if (!isSSShared) { showToast('Please confirm SS shared first'); return; }
-    placeOrder(); // This will handle the actual order saving and final WhatsApp msg
+    placeOrder();
 }
 
 function openOrders() {
@@ -178,15 +224,20 @@ function renderOrdersHistory() {
                     <p class="text-[10px] font-black text-stone-400 uppercase">${order.date}</p>
                     <p class="text-xs font-extrabold text-stone-900 mt-0.5">Order #${order.id}</p>
                 </div>
-                <div class="${order.method === 'ONLINE' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'} px-3 py-1 rounded-full border border-current/10 text-[9px] font-black uppercase tracking-tighter">
-                    ${order.method === 'ONLINE' ? 'Paid Online' : 'COD - Unpaid'}
+                <div class="flex flex-col gap-1 items-end">
+                    <div class="${order.method === 'ONLINE' ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-600'} px-3 py-1 rounded-full border border-current/10 text-[9px] font-black uppercase tracking-tighter">
+                        ${order.method === 'ONLINE' ? 'Paid Online' : 'COD - Unpaid'}
+                    </div>
+                    <button onclick="openTracking('${order.id}')" class="flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-widest mt-1">
+                        <span class="material-symbols-outlined text-[14px]">my_location</span> Track Map
+                    </button>
                 </div>
             </div>
             <div class="space-y-1.5 mb-3">
-                ${order.items.map(i => `<div class="flex justify-between text-[11px] font-bold text-stone-600"><span>${i.name} x ${i.qty}</span><span>₹${i.price * i.qty}</span></div>`).join('')}
+                ${order.items.map(i => `<div class="flex justify-between text-[11px] font-bold text-stone-600"><span>${i.name} x ${i.qty}</span><span>₹${getPrice(i.price) * i.qty}</span></div>`).join('')}
             </div>
             <div class="flex justify-between items-center pt-3 border-t border-stone-200/50">
-                <span class="text-xs font-black text-stone-900 uppercase">Total Paid</span>
+                <span class="text-xs font-black text-stone-900 uppercase">Total Bill</span>
                 <span class="text-sm font-black text-primary">₹${order.total}</span>
             </div>
         </div>
@@ -235,30 +286,25 @@ function renderMenu() {
     if (isVegOnly) items = items.filter(i => i.isVeg === true);
     if (searchQuery) items = items.filter(i => i.name.toLowerCase().includes(searchQuery));
 
-    if (items.length === 0) {
-        grid.innerHTML = `<div class="col-span-full py-20 text-center text-stone-400 font-medium">No items found.</div>`;
-        return;
-    }
-
-    grid.innerHTML = items.map(item => {
+    grid.innerHTML = items.length === 0 ? `<div class="col-span-full py-20 text-center text-stone-400 font-medium">No items found.</div>` : items.map((item, idx) => {
         const cartItem = cart.find(c => c.id === item.id);
         return `
-            <div class="glass-card rounded-2xl overflow-hidden flex flex-col h-full group transition-all hover:shadow-lg active:scale-95 duration-300">
+            <div class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full group transition-all hover:shadow-xl active:scale-95 duration-500 border border-white/20 animate-slide-up" style="animation-delay: ${idx * 0.05}s">
                 <div class="relative aspect-square overflow-hidden bg-stone-50/30">
                     <img src="${item.image}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="${item.name}">
-                    <div class="absolute top-2 right-2 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"><div></div></div>
+                    <div class="absolute top-3 right-3 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"><div></div></div>
                 </div>
-                <div class="p-3 flex flex-col flex-1">
-                    <h4 class="font-bold text-stone-800 text-[12px] leading-tight mb-2 line-clamp-2">${item.name}</h4>
+                <div class="p-4 flex flex-col flex-1">
+                    <h4 class="font-bold text-stone-800 text-[11px] uppercase tracking-tight leading-tight mb-3 line-clamp-2">${item.name}</h4>
                     <div class="mt-auto flex items-center justify-between gap-2">
                         <span class="font-black text-stone-900 text-sm">${isNaN(parseFloat(item.price)) ? item.price : '₹' + item.price}</span>
                         ${cartItem ? `
-                            <div class="flex items-center gap-3 bg-red-50/80 backdrop-blur rounded-lg p-1 border border-red-100">
-                                <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-primary font-bold bg-white rounded shadow-sm">−</button>
-                                <span class="font-black text-primary text-xs w-4 text-center">${cartItem.qty}</span>
-                                <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-white font-bold bg-primary rounded shadow-sm">+</button>
+                            <div class="flex items-center gap-2.5 bg-stone-100 rounded-xl p-1 border border-stone-200/50">
+                                <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-stone-900 font-bold bg-white rounded-lg shadow-sm active:scale-90 transition-all">−</button>
+                                <span class="font-black text-primary text-[11px] w-4 text-center">${cartItem.qty}</span>
+                                <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-white font-bold bg-primary rounded-lg shadow-sm active:scale-90 transition-all">+</button>
                             </div>
-                        ` : `<button onclick="addToCart('${item.id}')" class="bg-white/80 backdrop-blur border border-stone-200 text-stone-700 px-4 py-1.5 rounded-lg font-bold text-[10px] active:bg-stone-50 transition-all uppercase tracking-wider hover:border-primary/50">Add</button>`}
+                        ` : `<button onclick="addToCart('${item.id}')" class="bg-stone-900 text-white px-5 py-2 rounded-xl font-black text-[9px] active:scale-95 transition-all uppercase tracking-widest shadow-lg shadow-stone-900/10">Add</button>`}
                     </div>
                 </div>
             </div>
@@ -269,7 +315,7 @@ function renderMenu() {
 function addToCart(itemId) {
     let item;
     menuData.categories.forEach(cat => { const found = cat.items.find(i => i.id === itemId); if (found) item = found; });
-    if (item) { cart.push({ ...item, qty: 1 }); updateCart(); showToast(`Added ${item.name} to cart`); }
+    if (item) { cart.push({ ...item, qty: 1 }); updateCart(); showToast(`Added ${item.name}`); }
 }
 
 function changeQty(itemId, delta) {
@@ -277,30 +323,29 @@ function changeQty(itemId, delta) {
     if (idx > -1) { cart[idx].qty += delta; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateCart(); }
 }
 
-function getPrice(price) {
-    return isNaN(parseFloat(price)) ? 0 : parseFloat(price);
-}
+function getPrice(price) { return isNaN(parseFloat(price)) ? 0 : parseFloat(price); }
 
 function updateCart() {
     localStorage.setItem('kinara_cart', JSON.stringify(cart));
     const count = cart.reduce((acc, item) => acc + item.qty, 0);
-    const total = cart.reduce((acc, item) => acc + (getPrice(item.price) * item.qty), 0);
+    const { itemTotal, deliveryFee, grandTotal, distance } = calculateCartTotals();
     
-    // Update Badge in Bottom Nav
     const badge = document.getElementById('cart-badge');
     if (badge) {
         if (count > 0) {
-            badge.textContent = count;
-            badge.classList.remove('hidden');
-            badge.classList.add('cart-pop');
-            setTimeout(() => badge.classList.remove('cart-pop'), 300);
-        } else {
-            badge.classList.add('hidden');
-        }
+            badge.textContent = count; badge.classList.remove('hidden');
+            badge.classList.add('cart-pop'); setTimeout(() => badge.classList.remove('cart-pop'), 300);
+        } else { badge.classList.add('hidden'); }
     }
 
-    const totalAmtEl = document.getElementById('cart-total-amt');
-    if (totalAmtEl) totalAmtEl.textContent = `₹${total}`;
+    if (document.getElementById('cart-items-amt')) document.getElementById('cart-items-amt').textContent = `₹${itemTotal}`;
+    if (document.getElementById('delivery-amt')) document.getElementById('delivery-amt').textContent = `₹${deliveryFee}`;
+    if (document.getElementById('cart-total-amt')) document.getElementById('cart-total-amt').textContent = `₹${grandTotal}`;
+    
+    if (document.getElementById('delivery-label')) {
+        if (userCoords) document.getElementById('delivery-label').textContent = `Delivery (${distance.toFixed(1)} KM)`;
+        else document.getElementById('delivery-label').textContent = `Delivery Fee`;
+    }
     
     renderCartItems();
     renderMenu();
@@ -312,23 +357,43 @@ function renderCartItems() {
     if (!list || !footer) return;
     
     if (cart.length === 0) {
-        list.innerHTML = `<div class="flex flex-col items-center py-10 text-stone-400 text-sm">Your cart is empty</div>`;
-        footer.classList.add('hidden'); return;
+        list.innerHTML = `
+            <div class="flex flex-col items-center py-16 text-center animate-fade-in">
+                <div class="w-32 h-32 bg-stone-50 rounded-full flex items-center justify-center mb-6 empty-cart-gradient">
+                    <span class="material-symbols-outlined text-stone-200 text-5xl">shopping_basket</span>
+                </div>
+                <h3 class="text-sm font-black text-stone-900 uppercase tracking-widest mb-2">Your cart is empty</h3>
+                <p class="text-[10px] font-bold text-stone-400 uppercase tracking-tight max-w-[200px] leading-relaxed">Looks like you haven't added any Malvani treasures yet.</p>
+                <button onclick="closeCart()" class="mt-8 text-[10px] font-black text-primary uppercase tracking-[0.2em] border-b-2 border-primary/20 pb-1">Start Exploring</button>
+            </div>
+        `;
+        footer.classList.add('hidden');
+        return;
     }
+    
     footer.classList.remove('hidden');
-    list.innerHTML = cart.map(item => {
-        const displayPrice = isNaN(parseFloat(item.price)) ? item.price : `₹${item.price}`;
-        return `
-        <div class="flex items-center gap-4 bg-stone-50 p-3 rounded-2xl border border-stone-100">
-            <img src="${item.image}" class="w-16 h-16 rounded-xl object-cover">
-            <div class="flex-1"><h5 class="font-bold text-stone-800 text-xs">${item.name}</h5><p class="text-primary font-extrabold text-xs mt-1">${displayPrice}</p></div>
-            <div class="flex items-center gap-3 bg-white rounded-lg p-1 border border-stone-200">
-                <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-primary font-bold">−</button>
-                <span class="font-bold text-stone-900 text-xs">${item.qty}</span>
-                <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-primary font-bold">+</button>
+    list.innerHTML = cart.map((item, idx) => `
+        <div class="flex items-center gap-5 bg-white p-4 rounded-[28px] border border-stone-100 group transition-all duration-500 hover:shadow-2xl hover:shadow-stone-200/40 animate-slide-in" style="animation-delay: ${idx * 0.05}s">
+            <div class="w-20 h-20 rounded-[20px] overflow-hidden shadow-sm border border-stone-50 bg-stone-50 relative flex-shrink-0">
+                <img src="${item.image}" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110">
+                <div class="absolute top-1.5 right-1.5 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'} scale-75"><div></div></div>
+            </div>
+            <div class="flex-1 min-w-0">
+                <p class="text-[8px] font-black text-stone-300 uppercase tracking-[0.2em] mb-1">${item.categoryName || 'Main Course'}</p>
+                <h5 class="font-black text-stone-900 text-[11px] uppercase tracking-tight line-clamp-1 mb-1">${item.name}</h5>
+                <p class="text-primary font-black text-xs">₹${item.price}</p>
+            </div>
+            <div class="flex flex-col items-center gap-2 bg-stone-50 rounded-2xl p-1.5 border border-stone-100">
+                <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-stone-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">add</span>
+                </button>
+                <span class="font-black text-stone-900 text-xs w-5 text-center">${item.qty}</span>
+                <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-stone-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined text-[18px]">remove</span>
+                </button>
             </div>
         </div>
-    `}).join('');
+    `).join('');
 }
 
 function openCart() { document.getElementById('cart-modal').classList.add('open'); }
@@ -337,58 +402,80 @@ function closeCart() { document.getElementById('cart-modal').classList.remove('o
 function placeOrder() {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
     if (!profile.name || !profile.phone) { showToast('Complete profile first'); openProfile(); return; }
-    const total = cart.reduce((acc, item) => acc + (getPrice(item.price) * item.qty), 0);
+    
+    const { itemTotal, deliveryFee, grandTotal, distance } = calculateCartTotals();
     const orderId = Math.floor(1000 + Math.random() * 9000);
     const date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
-    const newOrder = { id: orderId, date: date, items: [...cart], total: total, method: paymentMethod };
+    
+    const newOrder = { id: orderId, date: date, items: [...cart], total: grandTotal, method: paymentMethod, distance: distance, coords: userCoords };
     orders.push(newOrder);
     localStorage.setItem('kinara_orders', JSON.stringify(orders));
 
     let msg = `*NEW ORDER - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Status:* ${paymentMethod === 'ONLINE' ? 'PAID ONLINE' : 'COD'}\n\n*Customer:* ${profile.name}\n*Phone:* ${profile.phone}\n*Address:* ${profile.address}\n`;
-    
-    // Add Google Maps Link if available
-    if (profile.coords) {
-        msg += `*Location Link:* https://www.google.com/maps?q=${profile.coords.lat},${profile.coords.lng}\n`;
-    }
+    if (profile.coords) msg += `*Location:* https://www.google.com/maps?q=${profile.coords.lat},${profile.coords.lng}\n*Distance:* ${distance.toFixed(1)} KM\n`;
     
     msg += `\n*ITEMS:*\n`;
-    cart.forEach(item => {
-        const itemTotal = isNaN(parseFloat(item.price)) ? item.price : `₹${item.price * item.qty}`;
-        msg += `• ${item.name} x ${item.qty} = ${itemTotal}\n`;
-    });
-    msg += `\n*TOTAL: ₹${total}*`;
+    cart.forEach(item => { msg += `• ${item.name} x ${item.qty} = ₹${getPrice(item.price) * item.qty}\n`; });
+    msg += `\n*Item Total:* ₹${itemTotal}\n*Delivery:* ₹${deliveryFee}\n*GRAND TOTAL: ₹${grandTotal}*`;
     
-    // Open WhatsApp
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
-    // Show Order Confirmed Screen for 2.5 seconds
-    const overlay = document.getElementById('confirmed-overlay');
-    if (overlay) {
-        overlay.classList.remove('pointer-events-none');
-        overlay.classList.add('opacity-100');
-        
-        setTimeout(() => {
-            overlay.classList.remove('opacity-100');
-            overlay.classList.add('pointer-events-none');
-            
-            closeCart();
-            cart = []; // Clear cart after order is confirmed
-            updateCart();
-            openOrders(); // Go to tracking section
-        }, 2500);
-    } else {
-        closeCart();
-        cart = [];
-        updateCart();
-        openOrders();
-    }
+    setTimeout(() => {
+        cart = []; updateCart(); closeCart();
+        openTracking(orderId);
+    }, 1000);
 }
 
-function openStatus(orderData) {
-    document.getElementById('status-total-amt').textContent = `₹${orderData.total}`;
-    document.getElementById('status-order-id').textContent = orderData.id;
-    document.getElementById('status-items-list').innerHTML = orderData.items.map(item => `<div class="flex justify-between py-2 border-b border-white/5"><p class="text-xs font-bold text-stone-100">${item.name} x ${item.qty}</p><p class="text-xs font-black text-white">₹${item.price * item.qty}</p></div>`).join('');
-    document.getElementById('status-modal').classList.add('open');
+function openTracking(orderId) {
+    const order = orders.find(o => o.id == orderId);
+    if (!order) return;
+    
+    document.getElementById('tracking-modal').classList.add('open');
+    document.getElementById('track-dist').textContent = `${(order.distance || 0).toFixed(1)} KM`;
+    document.getElementById('track-eta').textContent = `${Math.ceil((order.distance || 0) * 5 + 15)} Mins`;
+    
+    // Init Map with Cinematic Style
+    setTimeout(() => {
+        if (historyMap) { historyMap.remove(); historyMap = null; }
+        historyMap = L.map('history-map', { zoomControl: false, attributionControl: false }).setView([HOTEL_COORDS.lat, HOTEL_COORDS.lng], 13);
+        
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png').addTo(historyMap);
+        
+        const hotelIcon = L.icon({
+            iconUrl: 'logo-main.png',
+            iconSize: [36, 36],
+            iconAnchor: [18, 18],
+            className: 'map-logo-marker shadow-lg'
+        });
+        
+        const userIcon = L.divIcon({
+            className: 'custom-div-icon',
+            html: `<div style="background:#e23744; width:34px; height:34px; border-radius:50%; border:3px solid white; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 16px rgba(226,55,68,0.3);"><span class="material-symbols-outlined" style="color:white; font-size:18px;">location_on</span></div>`,
+            iconSize: [34, 34],
+            iconAnchor: [17, 17]
+        });
+
+        L.marker([HOTEL_COORDS.lat, HOTEL_COORDS.lng], { icon: hotelIcon }).addTo(historyMap).bindPopup('Kinara Seafood');
+        
+        if (order.coords) {
+            L.marker([order.coords.lat, order.coords.lng], { icon: userIcon }).addTo(historyMap).bindPopup('Delivery Point');
+            const line = L.polyline([[HOTEL_COORDS.lat, HOTEL_COORDS.lng], [order.coords.lat, order.coords.lng]], { 
+                color: '#e23744', 
+                weight: 6, 
+                opacity: 0.6,
+                lineCap: 'round',
+                dashArray: '1, 12'
+            }).addTo(historyMap);
+            
+            historyMap.fitBounds(line.getBounds(), { padding: [40, 40], animate: true, duration: 1.5 });
+        }
+        
+        document.getElementById('history-map-loader').classList.add('hidden');
+    }, 500);
+}
+
+function closeTracking() {
+    document.getElementById('tracking-modal').classList.remove('open');
 }
 
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); }
@@ -397,77 +484,42 @@ function closeProfile() { document.getElementById('profile-modal').classList.rem
 function detectLocation() {
     const btn = document.getElementById('detect-loc-btn');
     const status = document.getElementById('location-status');
-    
     btn.innerHTML = `<span class="animate-spin material-symbols-outlined">sync</span> Capturing...`;
     
-    if (!navigator.geolocation) {
-        showToast("Geolocation not supported");
-        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">my_location</span> Detect My Location`;
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        (pos) => {
-            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
-            status.classList.remove('hidden');
-            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> Location Pin Saved`;
-            btn.classList.replace('bg-white', 'bg-green-50');
-            btn.classList.replace('text-stone-600', 'text-green-600');
-            showToast("House location pinned!");
-        },
-        (err) => {
-            showToast("Allow location access to pin house");
-            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">my_location</span> Detect My Location`;
-        },
-        { enableHighAccuracy: true }
-    );
+    if (!navigator.geolocation) { showToast("Not supported"); return; }
+    navigator.geolocation.getCurrentPosition((pos) => {
+        userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+        status.classList.remove('hidden');
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> Location Pin Saved`;
+        btn.classList.replace('bg-white', 'bg-green-50');
+        btn.classList.replace('text-stone-600', 'text-green-600');
+        updateCart(); showToast("House location pinned!");
+    }, () => { showToast("Allow access to pin house"); }, { enableHighAccuracy: true });
 }
 
 function saveProfile() {
-    const profile = { 
-        name: document.getElementById('prof-name').value, 
-        email: document.getElementById('prof-email').value, 
-        phone: document.getElementById('prof-phone').value, 
-        address: document.getElementById('prof-addr').value,
-        coords: userCoords // Save coordinates
-    };
-    if (!profile.name || !profile.phone) { showToast('Required fields missing'); return; }
+    const profile = { name: document.getElementById('prof-name').value, email: document.getElementById('prof-email').value, phone: document.getElementById('prof-phone').value, address: document.getElementById('prof-addr').value, coords: userCoords };
+    if (!profile.name || !profile.phone) { showToast('Missing fields'); return; }
     localStorage.setItem('kinara_profile', JSON.stringify(profile));
-    showToast('Profile saved'); closeProfile();
+    showToast('Profile saved'); closeProfile(); updateCart();
 }
 
 function loadProfile() {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
     if (profile.name) { 
-        const nameEl = document.getElementById('prof-name');
-        const emailEl = document.getElementById('prof-email');
-        const phoneEl = document.getElementById('prof-phone');
-        const addrEl = document.getElementById('prof-addr');
-        if(nameEl) nameEl.value = profile.name; 
-        if(emailEl) emailEl.value = profile.email; 
-        if(phoneEl) phoneEl.value = profile.phone; 
-        if(addrEl) addrEl.value = profile.address; 
-        if(profile.coords) {
-            userCoords = profile.coords;
-            const status = document.getElementById('location-status');
-            if(status) status.classList.remove('hidden');
-        }
+        document.getElementById('prof-name').value = profile.name;
+        document.getElementById('prof-email').value = profile.email;
+        document.getElementById('prof-phone').value = profile.phone;
+        document.getElementById('prof-addr').value = profile.address;
+        if(profile.coords) { userCoords = profile.coords; document.getElementById('location-status').classList.remove('hidden'); }
     }
 }
 
 function showToast(text) {
-    const toast = document.getElementById('toast'); 
-    if(!toast) return;
+    const toast = document.getElementById('toast'); if(!toast) return;
     toast.textContent = text; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -20px)';
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 0)'; }, 3000);
 }
 
-function closeStatus() {
-    document.getElementById('status-modal').classList.remove('open');
-    cart = []; // Clear cart after order is "placed"
-    updateCart();
-}
-
-function confirmOnlinePayment() {
-    // Placeholder if needed
-}
+function closeStatus() {}
+function confirmOnlinePayment() {}
