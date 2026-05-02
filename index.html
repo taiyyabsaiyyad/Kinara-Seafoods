@@ -394,6 +394,16 @@
             <input id="prof-email" type="email" placeholder="Email Address" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
             <input id="prof-phone" type="tel" placeholder="Contact Number" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
             <textarea id="prof-addr" rows="3" placeholder="Delivery Address" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary resize-none"></textarea>
+            
+            <div id="location-status" class="hidden text-[10px] font-bold text-green-600 bg-green-50 p-2 rounded-lg flex items-center gap-2">
+                <span class="material-symbols-outlined text-[14px]">location_on</span>
+                Live Location Pin Captured!
+            </div>
+            <button id="detect-loc-btn" onclick="detectLocation()" class="w-full border border-stone-100 bg-white text-stone-600 py-3 rounded-xl font-bold text-xs flex items-center justify-center gap-2 active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[18px]">my_location</span>
+                Detect My Location (Pinpoint House)
+            </button>
+
             <button onclick="saveProfile()" class="w-full bg-primary text-white py-4 rounded-xl font-black text-sm active:scale-95 transition-all">Save Details</button>
         </div>
     </div>

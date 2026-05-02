@@ -10,6 +10,7 @@ let searchQuery = '';
 let paymentMethod = 'COD';
 let isVegOnly = false;
 let isSSShared = false;
+let userCoords = null;
 
 // Initialize the app
 function init() {
@@ -43,6 +44,7 @@ function init() {
     window.confirmOnlineOrder = confirmOnlineOrder;
     window.switchTab = switchTab;
     window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
+    window.detectLocation = detectLocation;
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -342,7 +344,14 @@ function placeOrder() {
     orders.push(newOrder);
     localStorage.setItem('kinara_orders', JSON.stringify(orders));
 
-    let msg = `*NEW ORDER - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Status:* ${paymentMethod === 'ONLINE' ? 'PAID ONLINE' : 'COD'}\n\n*Customer:* ${profile.name}\n*Phone:* ${profile.phone}\n*Address:* ${profile.address}\n\n*ITEMS:*\n`;
+    let msg = `*NEW ORDER - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Status:* ${paymentMethod === 'ONLINE' ? 'PAID ONLINE' : 'COD'}\n\n*Customer:* ${profile.name}\n*Phone:* ${profile.phone}\n*Address:* ${profile.address}\n`;
+    
+    // Add Google Maps Link if available
+    if (profile.coords) {
+        msg += `*Location Link:* https://www.google.com/maps?q=${profile.coords.lat},${profile.coords.lng}\n`;
+    }
+    
+    msg += `\n*ITEMS:*\n`;
     cart.forEach(item => {
         const itemTotal = isNaN(parseFloat(item.price)) ? item.price : `₹${item.price * item.qty}`;
         msg += `• ${item.name} x ${item.qty} = ${itemTotal}\n`;
@@ -384,12 +393,49 @@ function openStatus(orderData) {
 
 function openProfile() { document.getElementById('profile-modal').classList.add('open'); }
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
+
+function detectLocation() {
+    const btn = document.getElementById('detect-loc-btn');
+    const status = document.getElementById('location-status');
+    
+    btn.innerHTML = `<span class="animate-spin material-symbols-outlined">sync</span> Capturing...`;
+    
+    if (!navigator.geolocation) {
+        showToast("Geolocation not supported");
+        btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">my_location</span> Detect My Location`;
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            userCoords = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+            status.classList.remove('hidden');
+            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">check_circle</span> Location Pin Saved`;
+            btn.classList.replace('bg-white', 'bg-green-50');
+            btn.classList.replace('text-stone-600', 'text-green-600');
+            showToast("House location pinned!");
+        },
+        (err) => {
+            showToast("Allow location access to pin house");
+            btn.innerHTML = `<span class="material-symbols-outlined text-[18px]">my_location</span> Detect My Location`;
+        },
+        { enableHighAccuracy: true }
+    );
+}
+
 function saveProfile() {
-    const profile = { name: document.getElementById('prof-name').value, email: document.getElementById('prof-email').value, phone: document.getElementById('prof-phone').value, address: document.getElementById('prof-addr').value };
+    const profile = { 
+        name: document.getElementById('prof-name').value, 
+        email: document.getElementById('prof-email').value, 
+        phone: document.getElementById('prof-phone').value, 
+        address: document.getElementById('prof-addr').value,
+        coords: userCoords // Save coordinates
+    };
     if (!profile.name || !profile.phone) { showToast('Required fields missing'); return; }
     localStorage.setItem('kinara_profile', JSON.stringify(profile));
     showToast('Profile saved'); closeProfile();
 }
+
 function loadProfile() {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
     if (profile.name) { 
@@ -401,8 +447,14 @@ function loadProfile() {
         if(emailEl) emailEl.value = profile.email; 
         if(phoneEl) phoneEl.value = profile.phone; 
         if(addrEl) addrEl.value = profile.address; 
+        if(profile.coords) {
+            userCoords = profile.coords;
+            const status = document.getElementById('location-status');
+            if(status) status.classList.remove('hidden');
+        }
     }
 }
+
 function showToast(text) {
     const toast = document.getElementById('toast'); 
     if(!toast) return;
