@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kinara-cache-v13';
+const CACHE_NAME = 'kinara-cache-v16';
 const ASSETS = [
   './',
   './index.html',

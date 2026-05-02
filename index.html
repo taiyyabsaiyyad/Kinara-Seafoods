@@ -239,12 +239,34 @@
         <input id="search-input" type="search" placeholder="Search delicious seafood..." oninput="filterMenu()" class="w-full bg-white border border-stone-100 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none shadow-sm">
     </div>
 
+    <!-- Order Mode Switcher -->
+    <div class="px-1 mt-2">
+        <div class="bg-white/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white/40 flex gap-1 shadow-sm">
+            <button id="mode-delivery" onclick="setOrderMode('DELIVERY')" class="flex-1 py-3 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-black text-[10px] uppercase tracking-widest bg-white shadow-sm text-primary">
+                <span class="material-symbols-outlined text-[18px]">delivery_dining</span>
+                Delivery
+            </button>
+            <button id="mode-dinein" onclick="setOrderMode('DINE_IN')" class="flex-1 py-3 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-black text-[10px] uppercase tracking-widest text-stone-400">
+                <span class="material-symbols-outlined text-[18px]">restaurant</span>
+                Dine-In
+            </button>
+        </div>
+    </div>
+
     <!-- Veg Only Toggle -->
-    <div class="flex justify-end items-center gap-3 px-1">
-        <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pure Veg Only</span>
-        <button id="veg-toggle" onclick="toggleVegOnly()" class="w-12 h-6 bg-stone-200 rounded-full relative transition-all duration-300">
-            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 transform" id="veg-toggle-circle"></div>
-        </button>
+    <div class="flex justify-between items-center gap-3 px-1">
+        <div id="dine-in-status" class="hidden animate-fade-in">
+            <p class="text-[9px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                In-Restaurant Mode
+            </p>
+        </div>
+        <div class="flex items-center gap-3 ml-auto">
+            <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pure Veg Only</span>
+            <button id="veg-toggle" onclick="toggleVegOnly()" class="w-12 h-6 bg-stone-200 rounded-full relative transition-all duration-300">
+                <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 transform" id="veg-toggle-circle"></div>
+            </button>
+        </div>
     </div>
 
     <!-- Categories -->
@@ -434,6 +456,15 @@
             <div id="cart-items-list" class="space-y-4 mb-10">
                 <!-- Empty state will be injected here by JS if needed -->
             </div>
+
+            <!-- Table Number Section (Dine-In Only) -->
+            <div id="dine-in-fields" class="hidden mb-10 space-y-4 animate-slide-up">
+                <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest text-center">Your Table Details</p>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg">restaurant</span>
+                    <input id="table-number" type="number" placeholder="Enter Table Number (e.g. 05)" class="w-full bg-stone-50 border-stone-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+                </div>
+            </div>
             
             <div id="cart-footer" class="space-y-8 hidden">
                 <!-- Bill Breakdown -->
@@ -458,6 +489,20 @@
                             </span>
                             <span id="delivery-amt" class="text-stone-900 font-black">₹0</span>
                         </div>
+                        
+                        <!-- Tip Section -->
+                        <div class="pt-2">
+                            <div class="flex justify-between items-center mb-3">
+                                <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest">Support Staff with Tip</p>
+                                <p id="tip-amt-display" class="text-[10px] font-black text-primary uppercase">₹0</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="setTip(0)" id="tip-btn-0" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all bg-white shadow-sm text-primary border-primary/20">None</button>
+                                <button onclick="setTip(20)" id="tip-btn-20" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹20</button>
+                                <button onclick="setTip(50)" id="tip-btn-50" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹50</button>
+                                <button onclick="setTip(100)" id="tip-btn-100" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹100</button>
+                            </div>
+                        </div>
                         <div class="pt-5 dashed-line"></div>
                         <div class="flex justify-between items-end">
                             <div>
@@ -473,10 +518,27 @@
 
                 <!-- Payment Selection -->
                 <div class="space-y-4">
-                    <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest text-center">Select Payment Mode</p>
-                    <div class="flex p-1.5 bg-stone-100 rounded-2xl gap-1">
-                        <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex-1 py-3.5 rounded-xl transition-all duration-400 font-black text-[10px] uppercase tracking-widest bg-white shadow-sm text-primary">Cash on Delivery</button>
-                        <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="flex-1 py-3.5 rounded-xl transition-all duration-400 font-black text-[10px] uppercase tracking-widest text-stone-400">Pay Online</button>
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="h-[1px] flex-1 bg-stone-100"></div>
+                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Payment Method</p>
+                        <div class="h-[1px] flex-1 bg-stone-100"></div>
+                    </div>
+                    
+                    <div id="payment-modes-container" class="grid grid-cols-2 gap-3">
+                        <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 bg-white border-primary shadow-sm">
+                            <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-900">COD</span>
+                        </button>
+                        
+                        <button id="pay-method-dine" onclick="setPaymentMethod('DINE_PAY')" class="hidden flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50">
+                            <span class="material-symbols-outlined text-stone-400 text-[20px]">restaurant_menu</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Eat & Pay</span>
+                        </button>
+                        
+                        <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50">
+                            <span class="material-symbols-outlined text-stone-400 text-[20px]">qr_code_2</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Online</span>
+                        </button>
                     </div>
                 </div>
 
