@@ -23,8 +23,12 @@ function init() {
     loadProfile();
     updateCart();
     renderCategories();
-    renderMenu();
-    renderOrdersHistory();
+    
+    // Defer menu and history rendering to prevent initial load lag
+    setTimeout(() => {
+        renderMenu();
+        renderOrdersHistory();
+    }, 100);
     
     // Global function bindings
     window.setOrderMode = setOrderMode;
@@ -371,10 +375,11 @@ function sharePaymentSS(orderId, amount) {
 function renderCategories() {
     const row = document.getElementById('cat-row');
     if (!row) return;
-    const categories = ['All', ...menuData.categories.map(c => c.name)];
-    row.innerHTML = categories.map(cat => {
-        const activeClass = cat === currentCategory ? "active-cat" : "bg-white/80 text-stone-500 border-stone-200 hover:bg-white";
-        return `<button class="px-6 py-3 rounded-2xl flex-shrink-0 font-black text-[11px] border transition-all whitespace-nowrap uppercase tracking-widest shadow-sm ${activeClass}" onclick="setCat('${cat}')">${cat}</button>`;
+    const cats = ['All', ...menuData.categories.map(c => c.name)];
+    row.innerHTML = cats.map(cat => {
+        const isActive = cat === currentCategory;
+        const activeClass = isActive ? "bg-primary text-white border-primary shadow-lg shadow-primary/20 scale-105" : "bg-white text-stone-500 border-stone-100 hover:bg-stone-50";
+        return `<button class="px-6 py-3 rounded-2xl flex-shrink-0 font-black text-[10px] border transition-all whitespace-nowrap uppercase tracking-widest ${activeClass}" onclick="setCat('${cat}')">${cat}</button>`;
     }).join('');
 }
 
@@ -401,39 +406,94 @@ function clearSearch() {
     filterMenu();
 }
 
+let cachedMenuItems = null;
+function getFlattenedMenu() {
+    if (cachedMenuItems) return cachedMenuItems;
+    cachedMenuItems = [];
+    menuData.categories.forEach(cat => {
+        cat.items.forEach(item => {
+            cachedMenuItems.push({ ...item, categoryName: cat.name });
+        });
+    });
+    return cachedMenuItems;
+}
+
+let searchTimer;
+function filterMenu() {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        searchQuery = document.getElementById('search-input').value.toLowerCase();
+        renderMenu();
+    }, 300);
+}
+
 function renderMenu() {
     const grid = document.getElementById('menu-grid');
     if (!grid) return;
-    let items = [];
-    menuData.categories.forEach(cat => cat.items.forEach(item => items.push({ ...item, categoryName: cat.name })));
-    if (currentCategory !== 'All') items = items.filter(i => i.categoryName === currentCategory);
-    if (isVegOnly) items = items.filter(i => i.isVeg === true);
-    if (searchQuery) items = items.filter(i => i.name.toLowerCase().includes(searchQuery));
+    
+    const allItems = getFlattenedMenu();
+    let filteredItems = allItems;
 
-    grid.innerHTML = items.length === 0 ? `<div class="col-span-full py-20 text-center text-stone-400 font-medium">No items found.</div>` : items.map((item, idx) => {
-        const cartItem = cart.find(c => c.id === item.id);
-        return `
-            <div class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full group transition-all hover:shadow-xl active:scale-95 duration-500 border border-white/20 animate-slide-up" style="animation-delay: ${idx * 0.05}s">
-                <div class="relative aspect-square overflow-hidden bg-stone-50/30">
-                    <img src="${item.image}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="${item.name}">
-                    <div class="absolute top-3 right-3 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'}"><div></div></div>
-                </div>
-                <div class="p-4 flex flex-col flex-1">
-                    <h4 class="font-bold text-stone-800 text-[11px] uppercase tracking-tight leading-tight mb-3 line-clamp-2">${item.name}</h4>
-                    <div class="mt-auto flex items-center justify-between gap-2">
-                        <span class="font-black text-stone-900 text-sm">${isNaN(parseFloat(item.price)) ? item.price : '₹' + item.price}</span>
-                        ${cartItem ? `
-                            <div class="flex items-center gap-2.5 bg-stone-100 rounded-xl p-1 border border-stone-200/50">
-                                <button onclick="changeQty('${item.id}', -1)" class="w-7 h-7 flex items-center justify-center text-stone-900 font-bold bg-white rounded-lg shadow-sm active:scale-90 transition-all">−</button>
-                                <span class="font-black text-primary text-[11px] w-4 text-center">${cartItem.qty}</span>
-                                <button onclick="changeQty('${item.id}', 1)" class="w-7 h-7 flex items-center justify-center text-white font-bold bg-primary rounded-lg shadow-sm active:scale-90 transition-all">+</button>
-                            </div>
-                        ` : `<button onclick="addToCart('${item.id}')" class="bg-stone-900 text-white px-5 py-2 rounded-xl font-black text-[9px] active:scale-95 transition-all uppercase tracking-widest shadow-lg shadow-stone-900/10">Add</button>`}
+    if (currentCategory !== 'All') filteredItems = filteredItems.filter(i => i.categoryName === currentCategory);
+    if (isVegOnly) filteredItems = filteredItems.filter(i => i.isVeg === true);
+    if (searchQuery) filteredItems = filteredItems.filter(i => i.name.toLowerCase().includes(searchQuery));
+
+    const cartMap = new Map();
+    cart.forEach(c => cartMap.set(c.id, c.qty));
+
+    if (filteredItems.length === 0) {
+        grid.innerHTML = `<div class="col-span-full py-20 text-center text-stone-400 font-medium">No items found.</div>`;
+        return;
+    }
+
+    // If 'All' is selected, we group by category to provide the "headings" requested
+    if (currentCategory === 'All' && !searchQuery) {
+        let html = '';
+        menuData.categories.forEach(cat => {
+            const catItems = filteredItems.filter(i => i.categoryName === cat.name);
+            if (catItems.length > 0) {
+                html += `
+                    <div class="col-span-full mt-8 mb-4 px-1">
+                        <div class="flex items-center gap-4">
+                            <h3 class="text-[10px] font-black text-stone-900 uppercase tracking-[0.4em] whitespace-nowrap">
+                                ${cat.name}
+                            </h3>
+                            <div class="h-px flex-1 bg-gradient-to-r from-stone-200 to-transparent"></div>
+                        </div>
                     </div>
+                `;
+                html += catItems.map((item, idx) => renderMenuItem(item, idx, cartMap)).join('');
+            }
+        });
+        grid.innerHTML = html;
+    } else {
+        grid.innerHTML = filteredItems.map((item, idx) => renderMenuItem(item, idx, cartMap)).join('');
+    }
+}
+
+function renderMenuItem(item, idx, cartMap) {
+    const qty = cartMap.get(item.id);
+    return `
+        <div class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full group transition-all hover:shadow-xl active:scale-95 duration-500 border border-white/20 animate-slide-up" style="animation-delay: ${idx * 0.01}s">
+            <div class="relative aspect-square overflow-hidden bg-stone-50/30">
+                <img src="${item.image}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="${item.name}">
+                <div class="absolute top-3 right-3 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'} shadow-sm"><div></div></div>
+            </div>
+            <div class="p-4 flex flex-col flex-1">
+                <h4 class="font-bold text-stone-800 text-[11px] uppercase tracking-tight leading-tight mb-3 line-clamp-2">${item.name}</h4>
+                <div class="mt-auto flex items-center justify-between gap-2">
+                    <span class="font-black text-stone-900 text-[13px]">${isNaN(parseFloat(item.price)) ? item.price : '₹' + item.price}</span>
+                    ${qty ? `
+                        <div class="flex items-center gap-2 bg-stone-100/80 rounded-xl p-1 border border-stone-200/30 backdrop-blur-sm">
+                            <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-900 font-bold bg-white rounded-lg shadow-sm active:scale-90 transition-all text-xs">−</button>
+                            <span class="font-black text-primary text-[11px] w-4 text-center">${qty}</span>
+                            <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-white font-bold bg-primary rounded-lg shadow-sm active:scale-90 transition-all text-xs">+</button>
+                        </div>
+                    ` : `<button onclick="addToCart('${item.id}')" class="bg-stone-900 text-white px-4 py-2 rounded-xl font-black text-[9px] active:scale-95 transition-all uppercase tracking-widest shadow-lg shadow-stone-900/10">Add</button>`}
                 </div>
             </div>
-        `;
-    }).join('');
+        </div>
+    `;
 }
 
 function addToCart(itemId) {
