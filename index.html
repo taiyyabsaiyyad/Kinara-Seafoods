@@ -245,12 +245,7 @@
                     <span class="material-symbols-outlined text-[20px]">call</span>
                 </div>
                 <div class="flex-1">
-                    <div class="flex justify-between items-center mb-6">
-            <h2 class="text-xl font-black text-stone-900 uppercase tracking-tight">Order History</h2>
-            <button onclick="switchTab('home')" class="flex items-center gap-1.5 bg-primary/10 text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase active:scale-95 transition-all">
-                <span class="material-symbols-outlined text-[16px]">home</span> Back to Home
-            </button>
-        </div>
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Call Us</p>
                     <p class="text-sm font-extrabold text-stone-900">+91 70455 28239</p>
                 </div>
                 <span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">chevron_right</span>
@@ -326,7 +321,7 @@
                     <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Total Bill</p>
                     <p id="status-total-amt" class="text-xl font-black text-stone-900">₹0</p>
                 </div>
-                <button onclick="closeStatus()" class="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-extrabold text-xs active:scale-95 transition-all">Back to Home</button>
+                <button onclick="switchTab('home')" class="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-extrabold text-xs active:scale-95 transition-all">Back to Home</button>
             </div>
         </div>
     </div>
@@ -409,9 +404,9 @@
     <div class="modal-content">
         <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
         <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-stone-900">Order History</h2>
-            <button onclick="closeOrders()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
-                <span class="material-symbols-outlined text-[20px]">close</span>
+            <h2 class="text-2xl font-black text-stone-900 uppercase tracking-tight">Order History</h2>
+            <button onclick="switchTab('home')" class="flex items-center gap-1.5 bg-primary/10 text-primary px-4 py-2 rounded-full text-[10px] font-black uppercase active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[16px]">home</span> Back to Home
             </button>
         </div>
         <div id="orders-history-list" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar"></div>
