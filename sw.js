@@ -6,7 +6,7 @@ const ASSETS = [
   './data.js',
   './logo-main.png',
   './Hero (2).png',
-  './Hero-Mob.png',
+  './hero-mobile.png',
   './bg.png'
 ];
 
