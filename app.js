@@ -42,6 +42,18 @@ function init() {
     window.shareOnWhatsApp = shareOnWhatsApp;
     window.toggleSSShared = toggleSSShared;
     window.confirmOnlineOrder = confirmOnlineOrder;
+    window.switchTab = switchTab;
+}
+
+function switchTab(tab) {
+    if (tab === 'home') {
+        closeCart();
+        closeOrders();
+        closeProfile();
+        scrollToTop();
+    } else if (tab === 'orders') {
+        openOrders();
+    }
 }
 
 function scrollToTop() {
@@ -329,8 +341,23 @@ function placeOrder() {
     });
     msg += `\n*TOTAL: ₹${total}*`;
     
+    // Open WhatsApp
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
-    setTimeout(() => { closeCart(); openStatus(newOrder); }, 1000);
+    
+    // Show Order Confirmed Screen for 2.5 seconds
+    const overlay = document.getElementById('confirmed-overlay');
+    overlay.classList.remove('pointer-events-none');
+    overlay.classList.add('opacity-100');
+    
+    setTimeout(() => {
+        overlay.classList.remove('opacity-100');
+        overlay.classList.add('pointer-events-none');
+        
+        closeCart();
+        cart = []; // Clear cart after order is confirmed
+        updateCart();
+        openOrders(); // Go to tracking section
+    }, 2500);
 }
 
 function openStatus(orderData) {
@@ -363,75 +390,5 @@ function closeStatus() {
     updateCart();
 }
 
-// Review System
-let selectedRating = 0;
 const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do";
-
-window.setRating = function(n) {
-    selectedRating = n;
-    const stars = document.querySelectorAll('#star-rating span');
-    stars.forEach((s, i) => {
-        if (i < n) {
-            s.classList.remove('text-stone-300');
-            s.classList.add('text-yellow-400', 'fill-current');
-        } else {
-            s.classList.add('text-stone-300');
-            s.classList.remove('text-yellow-400', 'fill-current');
-        }
-    });
-};
-
-window.submitReview = function() {
-    const input = document.getElementById('review-input');
-    const text = input.value.trim();
-    
-    if (selectedRating === 0) {
-        showToast("Please select a star rating first!");
-        return;
-    }
-    
-    // Add to local UI (Simulation)
-    const container = document.getElementById('reviews-container');
-    const newReview = document.createElement('div');
-    newReview.className = "min-w-[280px] bg-white p-5 rounded-2xl space-y-3 border-2 border-primary/20 scale-95 animate-in fade-in zoom-in duration-500 shadow-xl";
-    
-    let starsHtml = '';
-    for(let i=0; i<5; i++) {
-        starsHtml += `<span class="material-symbols-outlined text-[18px] ${i < selectedRating ? 'fill-current text-yellow-400' : 'text-stone-200'}">star</span>`;
-    }
-
-    newReview.innerHTML = `
-        <div class="flex gap-0.5">
-            ${starsHtml}
-        </div>
-        <p class="text-[11px] leading-relaxed text-stone-600 italic">"${text || 'Exceptional seafood and authentic Malvani flavors. Highly recommend the Surmai Thali!'}"</p>
-        <div class="flex items-center gap-2">
-            <div class="w-6 h-6 bg-primary/10 rounded-full flex items-center justify-center text-[10px] font-bold text-primary">U</div>
-            <p class="text-[10px] font-black uppercase tracking-widest text-stone-900">You (Just now)</p>
-        </div>
-    `;
-    container.insertBefore(newReview, container.firstChild);
-    container.scrollTo({ left: 0, behavior: 'smooth' });
-    
-    showToast("Opening Google Reviews...");
-    
-    // Open Google Review
-    setTimeout(() => {
-        window.open(GOOGLE_REVIEW_URL, '_blank');
-    }, 1200);
-    
-    // Reset
-    input.value = "";
-    setRating(0);
-};
-
-// Initialize the app
-function init() {
-    loadProfile();
-    updateCart();
-    renderCategories();
-    renderMenu();
-    renderOrdersHistory();
-}
-
-document.addEventListener('DOMContentLoaded', init);
+window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
