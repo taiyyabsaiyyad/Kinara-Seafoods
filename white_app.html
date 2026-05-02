@@ -1,0 +1,1101 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Famous Biryani Corner | Order Online</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+  img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+  }
+</style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        colors: {
+          "primary-container": "#ff8c00",
+          "primary": "#904d00",
+          "surface": "#f8f9fa"
+        },
+        fontFamily: {
+          "headline-lg": ["Plus Jakarta Sans"],
+          "body-md": ["Plus Jakarta Sans"],
+          "headline-md": ["Plus Jakarta Sans"],
+          "body-lg": ["Plus Jakarta Sans"],
+          "label-sm": ["Plus Jakarta Sans"],
+          "label-bold": ["Plus Jakarta Sans"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  body { font-family: 'Plus Jakarta Sans', sans-serif; min-height: 100dvh; background: #f8f9fa; overscroll-behavior: none; padding-bottom: 90px; }
+  .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+  
+  /* Modal Animation */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 100; display: none; align-items: flex-end; }
+  .modal-overlay.open { display: flex; }
+  .modal-content { background: white; width: 100%; max-height: 85vh; overflow-y: auto; border-radius: 24px 24px 0 0; padding: 24px; animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+  @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  
+  /* Hide hero/trending when searching */
+  .search-active #hero-section, .search-active #trending-section { display: none; }
+</style>
+</head>
+<body class="text-stone-800">
+
+<!-- TopAppBar -->
+<header class="bg-white/90 backdrop-blur-md fixed top-0 w-full z-50 border-b border-stone-200/50 shadow-sm">
+  <div class="flex flex-col px-4 py-2 w-full max-w-7xl mx-auto gap-2">
+    <div class="flex justify-between items-center h-10">
+      <div class="flex flex-col">
+        <h1 class="text-[16px] font-extrabold tracking-tight text-stone-900 leading-none">FAMOUS BIRYANI CORNER</h1>
+        <span class="text-[10px] text-stone-500 font-semibold tracking-wide uppercase mt-1">Nerul, Navi Mumbai</span>
+      </div>
+      <button onclick="callRestaurant('8657707050')" class="flex items-center gap-1 bg-orange-100 text-orange-700 px-3 py-1.5 rounded-full text-xs font-bold active:scale-95 transition-all">
+        <span class="material-symbols-outlined text-[14px]">call</span> Call
+      </button>
+    </div>
+    <div class="relative w-full pb-2">
+      <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-lg">search</span>
+      <input id="search-input" type="search" placeholder="Search biryani, starters..." oninput="filterMenu()" class="w-full bg-stone-100 border-none rounded-xl py-2.5 pl-10 pr-4 text-sm focus:ring-2 focus:ring-orange-400 transition-all outline-none">
+    </div>
+  </div>
+</header>
+
+<main class="pt-[110px] px-4 max-w-7xl mx-auto space-y-6" id="main-content">
+  <!-- Hero Banner -->
+  <section id="hero-section" class="relative w-full h-[200px] rounded-2xl overflow-hidden shadow-lg group">
+    <img src="https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=900&q=80" loading="lazy" class="w-full h-full object-cover" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1546833998-877b37c2e582?w=600'">
+    <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
+    <div class="absolute top-3 left-3 flex gap-2">
+      <span class="bg-white/20 backdrop-blur-md border border-white/30 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold">📍 Nerul</span>
+      <span class="bg-orange-500 text-white px-2.5 py-0.5 rounded-full text-[10px] font-bold shadow-md">🚀 25-35 Min</span>
+    </div>
+    <div class="absolute bottom-4 left-4 text-white">
+      <h2 class="text-xl font-extrabold mb-1">Famous Biryani Corner</h2>
+      <p class="text-xs text-white/90 font-medium">Authentic Mughlai • Free Home Delivery</p>
+    </div>
+  </section>
+
+  <!-- Category Scroll -->
+  <section id="cat-section">
+    <div class="flex gap-3 overflow-x-auto no-scrollbar pb-2" id="cat-row">
+      <!-- Generated via JS -->
+    </div>
+  </section>
+
+  <!-- Menu Grid -->
+  <section>
+    <div id="search-banner" class="hidden mb-4 p-3 bg-orange-50 rounded-xl border border-orange-100 flex justify-between items-center">
+      <span id="search-banner-text" class="text-xs font-bold text-orange-600"></span>
+      <button onclick="clearSearch()" class="text-xs font-bold text-stone-500">✕ Clear</button>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" id="menu-grid">
+      <!-- Generated via JS -->
+    </div>
+  </section>
+</main>
+
+<!-- BottomNavBar -->
+  <a class="flex flex-col items-center justify-center text-stone-400 hover:text-orange-500 px-5 py-1.5" href="#" onclick="openCart()">
+    <div class="relative">
+      <span class="material-symbols-outlined text-[20px]">shopping_bag</span>
+      <span id="nav-cart-badge" class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold border border-white hidden">0</span>
+    </div>
+    <span class="text-[10px] font-bold mt-0.5">Cart</span>
+  </a>
+  <a class="flex flex-col items-center justify-center text-stone-400 hover:text-orange-500 px-5 py-1.5" href="#" onclick="openProfile()">
+    <span class="material-symbols-outlined text-[20px]">person</span>
+    <span class="text-[10px] font-bold mt-0.5">Profile</span>
+  </a>
+</nav>
+
+<!-- Contextual FAB Cart (Floating) -->
+<button id="cart-fab" onclick="openCart()" class="hidden fixed right-4 bottom-20 w-14 h-14 bg-gradient-to-tr from-orange-600 to-orange-400 text-white rounded-full flex items-center justify-center shadow-xl active:scale-95 transition-all z-40 border-2 border-white">
+  <span class="material-symbols-outlined text-[26px]">shopping_basket</span>
+  <div id="fab-cart-count" class="absolute -top-1 -right-1 bg-red-600 text-white text-[11px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-white">0</div>
+</button>
+
+<!-- ORDER DETAILS FAB (Floating) -->
+<button id="track-fab" onclick="toggleTracker()" class="hidden fixed left-4 bottom-20 bg-stone-900 text-white px-5 h-12 rounded-full flex items-center justify-center gap-2 shadow-2xl active:scale-95 transition-all z-40 border-2 border-white/10 animate-in slide-in-from-left duration-500">
+  <span id="track-fab-icon" class="material-symbols-outlined text-[20px]">receipt_long</span>
+  <span class="text-[11px] font-black uppercase tracking-widest">Order Details</span>
+</button>
+
+<!-- CART MODAL -->
+<div id="cart-modal" class="modal-overlay" onclick="if(event.target===this) closeCartModal()">
+  <div class="modal-content relative flex flex-col">
+    <div class="w-10 h-1.5 bg-stone-200 rounded-full mx-auto mb-4"></div>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-extrabold text-stone-900">Your Cart</h2>
+      <button onclick="closeCartModal()" class="text-stone-400 bg-stone-100 rounded-full w-8 h-8 flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">close</span></button>
+    </div>
+    
+    <div id="cart-items-list" class="flex-1 overflow-y-auto space-y-3 mb-4">
+      <!-- Cart items go here -->
+    </div>
+    
+    <div id="cart-footer" class="hidden flex-col gap-4 border-t border-stone-100 pt-4 mt-auto">
+      <div class="flex justify-between items-center text-lg font-extrabold text-stone-900">
+        <span>Total Bill</span>
+        <span id="cart-total-amt" class="text-orange-600">₹0</span>
+      </div>
+      
+      <div class="space-y-3 bg-stone-50 p-4 rounded-xl border border-stone-100">
+        <div>
+          <label class="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Your Name</label>
+          <input id="cust-name" type="text" placeholder="Enter your name" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-orange-400 outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-stone-500 uppercase tracking-wider">Delivery Address <span class="normal-case font-normal">(optional)</span></label>
+          <textarea id="cust-addr" rows="2" placeholder="Area / Landmark, Nerul" class="w-full bg-white border border-stone-200 rounded-lg px-3 py-2 text-sm mt-1 focus:ring-2 focus:ring-orange-400 outline-none resize-none"></textarea>
+        </div>
+      </div>
+      
+      <div id="payment-section" class="hidden flex flex-col items-center gap-3 bg-stone-50 p-4 rounded-xl border border-stone-100 mb-2 animate-in fade-in slide-in-from-bottom-2">
+        <div class="text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Scan to Pay with Any UPI App</div>
+        <div class="relative bg-white p-2 rounded-xl border border-stone-200 shadow-inner">
+           <img id="upi-qr" src="" class="w-36 h-36 rounded-lg" alt="UPI QR">
+           <div class="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-white/80 transition-opacity rounded-xl">
+             <span class="text-[10px] font-bold text-stone-900">Scan & Pay</span>
+           </div>
+        </div>
+        <div class="text-[11px] font-bold text-stone-700 bg-white px-3 py-1 rounded-full border border-stone-200 shadow-sm flex items-center gap-1.5">
+          <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+          UPI ID: tabsaiyyad@okicici
+        </div>
+        <div class="text-[10px] text-stone-500 text-center leading-relaxed italic max-w-[200px]">
+          Note: Please <span class="font-bold text-green-600 underline">share a screenshot</span> of the payment on WhatsApp after ordering.
+        </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <button onclick="placeOrder('whatsapp')" class="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-bold text-[15px] flex justify-center items-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-95 transition-transform">
+          Place Order via WhatsApp
+        </button>
+        <div class="grid grid-cols-2 gap-2">
+          <button onclick="togglePayment()" id="pay-btn" class="bg-orange-500 text-white py-3 rounded-xl font-bold text-[13px] active:scale-95 transition-all flex items-center justify-center gap-1.5 shadow-md shadow-orange-500/20">
+            <span class="material-symbols-outlined text-[18px]">payments</span> Pay Now
+          </button>
+          <button onclick="callRestaurant('8657707050')" class="bg-white text-orange-600 border-2 border-orange-100 py-3 rounded-xl font-bold text-[13px] active:bg-orange-50 transition-colors flex items-center justify-center gap-1.5">
+            <span class="material-symbols-outlined text-[18px]">call</span> Call Shop
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PROFILE MODAL -->
+<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this) closeProfile()">
+  <div class="modal-content flex flex-col">
+    <div class="w-10 h-1.5 bg-stone-200 rounded-full mx-auto mb-6"></div>
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-xl font-extrabold text-stone-900">Your Profile</h2>
+      <button onclick="closeProfile()" class="text-stone-400 bg-stone-100 rounded-full w-8 h-8 flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">close</span></button>
+    </div>
+    
+    <div class="space-y-6">
+      <div class="flex flex-col items-center py-4">
+        <div class="w-20 h-20 bg-orange-100 text-orange-600 rounded-3xl flex items-center justify-center mb-3">
+          <span class="material-symbols-outlined text-[40px]">account_circle</span>
+        </div>
+        <p class="text-xs font-bold text-stone-400 uppercase tracking-widest">Customer Record</p>
+      </div>
+
+      <div class="space-y-4">
+        <div>
+          <label class="text-[10px] font-bold text-stone-500 uppercase tracking-wider ml-1">Full Name</label>
+          <input id="prof-name" type="text" placeholder="Your Name" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3.5 text-sm mt-1 focus:ring-2 focus:ring-orange-400 outline-none">
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-stone-500 uppercase tracking-wider ml-1">Delivery Address</label>
+          <textarea id="prof-addr" rows="3" placeholder="Flat No, Building, Area..." class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3.5 text-sm mt-1 focus:ring-2 focus:ring-orange-400 outline-none resize-none"></textarea>
+        </div>
+        <div>
+          <label class="text-[10px] font-bold text-stone-500 uppercase tracking-wider ml-1">Phone Number</label>
+          <input id="prof-phone" type="tel" placeholder="91XXXXXXXX" class="w-full bg-stone-50 border border-stone-200 rounded-xl px-4 py-3.5 text-sm mt-1 focus:ring-2 focus:ring-orange-400 outline-none">
+        </div>
+      </div>
+
+      <button onclick="saveProfile()" class="w-full bg-stone-900 text-white py-4 rounded-2xl font-extrabold text-[15px] shadow-xl shadow-stone-200 active:scale-95 transition-all mt-4">
+        Save Profile Details
+      </button>
+      <p class="text-[10px] text-center text-stone-400 italic">This data is saved locally on your phone for faster ordering.</p>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 translate-y-4"></div>
+
+<!-- ORDER TRACKER -->
+<div id="order-tracker" class="fixed bottom-0 left-0 right-0 z-40 translate-y-full transition-transform duration-500">
+  <div class="max-w-md mx-auto bg-white rounded-t-[32px] shadow-[0_-20px_40px_rgba(0,0,0,0.05)] border-t border-stone-100 p-6 pb-10">
+    <div class="w-12 h-1 bg-stone-200 rounded-full mx-auto mb-6"></div>
+    
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h3 id="track-status-title" class="text-xl font-extrabold text-stone-800">Order Details</h3>
+        <p id="track-order-id" class="text-[11px] font-black text-orange-600 uppercase tracking-widest mt-1">ORDER #00000</p>
+      </div>
+      <div id="track-icon-container" class="w-14 h-14 bg-stone-900 text-white rounded-2xl flex items-center justify-center shadow-lg">
+        <span id="track-icon" class="material-symbols-outlined text-[32px]">receipt_long</span>
+      </div>
+    </div>
+
+    <!-- Bill Summary -->
+    <div class="mb-2 flex items-center gap-2">
+      <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Bill Summary</span>
+      <div class="flex-1 h-[1px] bg-stone-100"></div>
+    </div>
+    <div id="track-items-summary" class="bg-stone-50/50 rounded-2xl p-5 mb-6 space-y-3 border border-stone-100/50">
+      <!-- Items filled by JS -->
+    </div>
+
+    <div class="flex justify-between items-center mb-8 px-1">
+      <span class="text-xs font-black text-stone-400 uppercase tracking-widest">Total Paid</span>
+      <span id="track-total-amt" class="text-2xl font-black text-stone-900">₹0</span>
+    </div>
+
+    <!-- DELIVERY ANIMATION -->
+    <div id="track-animation-box" class="h-24 relative bg-stone-950 rounded-[28px] overflow-hidden mb-8 shadow-2xl border border-white/5">
+      <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#ffffff_1px,transparent_1px)] [background-size:16px_16px]"></div>
+      <div class="absolute left-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+         <div class="w-8 h-8 bg-white/5 rounded-full flex items-center justify-center border border-white/10">
+           <span class="material-symbols-outlined text-white/40 text-sm">store</span>
+         </div>
+         <span class="text-[8px] font-black text-white/30 uppercase tracking-tighter">Kitchen</span>
+      </div>
+      <div class="absolute right-6 top-1/2 -translate-y-1/2 flex flex-col items-center gap-1">
+         <div class="w-8 h-8 bg-orange-500/10 rounded-full flex items-center justify-center border border-orange-500/20">
+           <span class="material-symbols-outlined text-orange-400 text-sm">home</span>
+         </div>
+         <span class="text-[8px] font-black text-orange-400/80 uppercase tracking-tighter">You</span>
+      </div>
+      
+      <!-- THE MOVING BIKE -->
+      <div id="moving-bike" class="absolute top-1/2 -translate-y-1/2 transition-all duration-[30s] ease-linear" style="left: 15%">
+         <div class="flex flex-col items-center">
+           <div class="relative">
+             <span class="material-symbols-outlined text-orange-400 text-[32px] drop-shadow-[0_0_12px_rgba(251,146,60,0.6)]">moped</span>
+             <div class="absolute -right-1 -top-1 w-2 h-2 bg-orange-400 rounded-full animate-ping opacity-75"></div>
+           </div>
+           <div class="w-8 h-2 bg-white/10 rounded-full blur-[4px] mt-[-6px]"></div>
+         </div>
+      </div>
+    </div>
+
+    <div class="space-y-4">
+      <div class="flex items-center gap-4">
+        <div id="step-1" class="w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center"><span class="material-symbols-outlined text-sm">check</span></div>
+        <div class="flex-1">
+          <p class="text-xs font-bold text-stone-800 leading-none">Order Confirmed</p>
+          <p class="text-[10px] text-stone-400 mt-1">Famous Biryani Corner received your order</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="step-2" class="w-8 h-8 rounded-full bg-stone-100 text-stone-300 flex items-center justify-center font-bold text-xs">2</div>
+        <div class="flex-1">
+          <p id="step-2-text" class="text-xs font-bold text-stone-300 leading-none">Kitchen is Preparing</p>
+          <p class="text-[10px] text-stone-400 mt-1">Our chefs are working their magic</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <div id="step-3" class="w-8 h-8 rounded-full bg-stone-100 text-stone-300 flex items-center justify-center font-bold text-xs">3</div>
+        <div class="flex-1">
+          <p id="step-3-text" class="text-xs font-bold text-stone-300 leading-none">Out for Delivery</p>
+          <p class="text-[10px] text-stone-400 mt-1">Your rider is on the way to you</p>
+        </div>
+      </div>
+    </div>
+
+    <button onclick="hideTracker()" class="w-full mt-8 bg-stone-900 text-white py-4 rounded-2xl font-extrabold text-sm shadow-xl shadow-stone-200">Close Details</button>
+  </div>
+</div>
+</main>
+<script>
+/** 
+ * STANDALONE MENU DATA & CONFIG 
+ * (Embedded for portability as requested)
+ */
+const UPI_ID = 'tabsaiyyad@okicici';
+const UPI_NAME = 'Famous Biryani Corner';
+const MENU_STORAGE_KEY = 'fbc_menu_v27';
+const ORDERS_KEY = 'fbc_orders_log';
+const ALL_TAGS = ['Bestseller', 'Trending', 'New', 'Featured'];
+const ALL_CATEGORIES = ['Non-Veg Starters', 'Veg Starters', 'Fish Special', 'Rice Speciality', 'Punjabi Chicken', 'Punjabi Mutton', 'Veg Punjabi', 'Paneer Dishes', 'Chinese Veg Soup', 'Non-Veg Soup', 'Roti Items', 'Rice Dishes (Veg)', 'Veg Noodles', 'Veg Choupsuey', 'Veg Gravy', 'Chicken Noodles', 'Chicken Gravy', 'Non-Veg Choupsuey', 'Prawns Special', 'Papad & Raita', 'Kilo Special', 'Kichadi Special', 'Malwani Special', 'Moghlai Special', 'Rice Special'];
+
+const HERO_IMAGES = [
+  'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=1200',
+  'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=1200',
+  'https://images.unsplash.com/photo-1628294895950-9805252327bc?w=1200'
+];
+
+const CAT_IMAGES = {
+  'Non-Veg Starters': 'https://images.unsplash.com/photo-1628294895950-9805252327bc?w=400',
+  'Veg Starters': 'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400',
+  'Fish Special': 'https://images.unsplash.com/photo-1519984388953-d2406bc725e1?w=400',
+  'Rice Speciality': 'https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=400',
+  'Punjabi Chicken': 'https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?w=400',
+  'Punjabi Mutton': 'https://images.unsplash.com/photo-1545247181-516773cae754?w=400',
+  'Veg Punjabi': 'https://images.unsplash.com/photo-1601050690597-df0568f70950?w=400',
+  'Paneer Dishes': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',
+  'Chinese Veg Soup': 'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400',
+  'Non-Veg Soup': 'https://images.unsplash.com/photo-1603105037880-880cd4edfb0d?w=400',
+  'Roti Items': 'https://images.unsplash.com/photo-1574484284002-952d92456975?w=400',
+  'Rice Dishes (Veg)': 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400',
+  'Veg Noodles': 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?w=400',
+  'Veg Choupsuey': 'https://images.unsplash.com/photo-1585032226651-759b368d7246?w=400',
+  'Veg Gravy': 'https://images.unsplash.com/photo-1512058454905-6b841e7ad132?w=400',
+  'Chicken Noodles': 'https://images.unsplash.com/photo-1552611052-33e04de081de?w=400',
+  'Chicken Gravy': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+  'Non-Veg Choupsuey': 'https://images.unsplash.com/photo-1562967914-608f82629710?w=400',
+  'Prawns Special': 'https://images.unsplash.com/photo-1519984388953-d2406bc725e1?w=400',
+  'Papad & Raita': 'https://images.unsplash.com/photo-1604152135912-04a022e23696?w=400',
+  'Kilo Special': 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400',
+  'Kichadi Special': 'https://images.unsplash.com/photo-1546833998-877b37c2e582?w=400',
+  'Malwani Special': 'https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=400',
+  'Moghlai Special': 'https://images.unsplash.com/photo-1630851840633-f96999247032?w=400',
+  'Rice Special': 'https://images.unsplash.com/photo-1516684732162-798a0062be99?w=400'
+};
+
+function catImg(cat) { return CAT_IMAGES[cat] || 'https://images.unsplash.com/photo-1546833998-877b37c2e582?w=400'; }
+
+const LOCAL_IMAGES = ["Chicken Tandoori (Full) - 390.webp", "Chicken Tandoori (Half).jpg", "Tandoori Roasted Leg Piec.jpg", "Chicken Tikka (8pcs).jpg", "Chicken Reshmi Kabab (8pcs).jpg", "Chicken Pudina Kabab.jpg", "Mix Kabab.jfif", "Chicken Lollipop half.avif", "Chicken Lollipop 8 pc.avif", "Chicken Masala Lollipop.avif", "Tandoori Schezwan.avif", "Chicken Crispy.avif", "Veg Crispy.avif", "Paneer Crispy.avif", "Paneer Tikka.avif", "Veg Hara Bhara Kabab.avif", "Paneer Schezwan.avif", "Paneer Chilly.avif", "Paplet&Surmai Masala.avif", "Surmai Fry.avif", "Prawns Masala.avif", "Prawns Koliwada.avif", "Egg Masala.avif", "Egg Burji.avif", "Egg Omlet.avif", "Chicken Dum Biryani.avif", "Chicken Dum Biryani half.avif", "Chicken Tikka Biryan.avif", "Chicken Tava Fry Rice.avif", "Tandoori Biryani.avif", "Chicken Pulav.avif", "Mutton Biryani.avif", "Mutton Pulav.avif", "Prawns Biryani.avif", "Prawns Pulav.avif", "Egg Biryani.avif", "Veg Biryani.avif", "Paneer Tikka Biryani.avif", "Paneer Biryani.avif", "Paneer Pulav.avif", "Veg Pulav.avif", "Jeera Rice.avif", "Steam Rice.avif", "Chicken Moghlai.avif", "Chicken Masala.avif", "Chicken Kadai.avif", "Chicken 2 Pyaza.jfif", "Chicken Palak.jpg", "Butter Chicken.avif", "Chicken Kolhapuri.avif", "Chicken Tikka Masala.avif", "Chicken Afghani.webp", "Chicken Handi.jpg", "Mutton Moghlai.jfif", "Mutton Masala.jpg", "Mutton Kadai.jpg", "Mutton 2 Pyaza (Full).jpg", "Mutton Rogan Ghosh.avif", "Mutton Palak.webp", "Mutton Handi.jfif", "Alu Mutter.jpg", "Chana Masala.jpg", "Bhendi Masala.jpg", "Alu Gobi.jpg", "Bhendi Fry.jpg", "Gobi Masala.webp", "Mixed Vegetable.jfif", "Veg Kadai.jfif", "Veg Jalfraize.jpg", "Veg Makhawala.jpg", "Veg Kolhapuri.jfif", "Mushroom Masala.jpg", "Mushroom Kadai.jpg", "Mushroom Tikka Masal.jpg", "Palak Mutter.jfif", "Alu Palak.jfif", "Alu Jeera.jfif", "Dal Fry.webp", "Dal Fry.jpg", "Dal Tadka.jfif", "Dal Kolhapur.webp", "Paneer Masala.jpg", "Paneer Butter Masala.jpg", "Paneer Mutter.jpg", "Paneer Palak.jfif", "Paneer Makhawala.jpg", "Paneer Kolhapuri.jpg", "Paneer Kadai.webp", "Paneer Tikka Masala.jpg", "Shahi Paneer.jpg", "Chapati.jpg", "Butter-Chapati.jpg", "Roti (Atta).jpg", "Butter Roti.jpg", "Naan.jpg", "Butter Naan.jpg", "Parotha.jpg", "Butter Parotha.jpg", "Kulcha.jpg", "Butter Kulcha.jpeg", "Masala Kulcha.jpg", "Onion Kulcha.jpg", "Paneer Kulcha.jfif", "Garlic Naan.jpg", "Alu Parotha.jpg", "Stuffed Parotha.jfif", "Pudina Parotha.jpg", "Methi Parotha.jpg", "Veg Sweet Corn Soup.jfif", "Veg Hot & Sour Soup.webp", "Veg Manchow Soup.jpg", "Veg Clear Soup.jpg", "Chicken Sweet Corn Soup.jpg", "Chicken Hot & Sour Soup.jfif", "Chicken Manchow Soup.jfif", "Chicken Clear Soup.jpg", "Veg Fried Rice.webp", "Veg Schezwan Rice.jpg", "Veg Singapore Fried Rice.jpg", "Veg Hong Kong Fried Rice.jpg", "Veg Manchurian Fried Rice.webp", "Veg 3 in 1 Fried Rice.jfif", "Veg Triple Fried Rice.webp", "Paneer Fried Rice.jfif", "Paneer Schezwan Fried Rice.png", "Veg Noodles.jpg", "Veg Hakka Noodles.jpg", "Veg Schezwan Noodles.webp", "Veg Singapore Noodles.webp", "Veg Manchurian Noodles.jpg", "Veg Triple Noodles.jpg", "Veg Chinese Choupsey.jpg", "Veg American Choupsey.jpg", "Veg Manchurian (Dry&Gravy).webp", "Veg Garlic (Dry&Gravy).jpg", "Veg Ginger (Dry&Gravy).jfif", "Veg Schezwan (Dry&Gravy).png", "Mushroom Chilly (Dry&Gravy).webp", "Paneer Manchurian.jpg", "Mushroom Manchurian.jpg", "Chicken Fried Rice.webp", "Chicken Schezwan Fried Rice.jfif", "Chicken Triple Fried Rice.webp", "Chicken Singapore Fried Rice.jpg", "Chicken Manchurian Fried Rice.jfif", "Egg Fried Rice.jpg", "Egg Schezwan Fried Rice.jpg", "Egg Hong Kong Fried Rice.jpg", "Chicken Chilly Fried Rice.jfif", "Chicken Hakka Noodles.jpg", "Chicken Schezwan Noodles.webp", "Chicken Manchurian Noodles.avif", "Chicken Triple Noodles.jpg", "Egg Hakka Noodles.webp", "Egg Schezwan Noodles.jfif", "Chicken Manchurian (Dry&Gravy).jpg", "Chicken Chilly (Dry&Gravy).jfif", "Chicken Garlic (Dry&Gravy).jpg", "Chicken Schezwan.webp", "Chicken 65.jpg", "Chicken Hot Chilly.webp", "Prawns Fried Rice.webp", "Prawns Schezwan Fried Rice.jfif", "Mix Fried Rice.webp", "Mix Schezwan Fried Rice.webp", "Prawns Schezwan Noodles.jfif", "Prawns Hakka Noodles.jfif", "Mix Schezwan Noodles.jpg", "Prawns Chilly (Dry&Gravy).webp", "Prawns Garlic (Dry & Gravy).jfif", "Prawns Ginger.cms", "Prawns Schezwan Dry & Gravy).jfif", "Prawns Manchurian (Dry&Gravy).webp", "Roasted Papad.jpg", "Fry Papad.jpg", "Masala Papad.jpg", "Veg Raita.jfif", "Boondi Raita.jpg", "Butter Milk.jpg", "Green Salad.jpg", "Chicken Biryani (Kg).avif", "Chicken Tikka Biryani (Kg).jpg", "Mutton Biryani (Kg).jpg", "Prawns Biryani (Kg).jpg", "Veg Biryani & Pulav (Kg).jpg", "Paneer Tikka Biryani (Kg).jfif", "Tandoori Biryani (Kg).jpg", "Chicken Tikka Masala (Kg).jpg", "Dal Ghost (Kg).webp", "Dal Khichadi.jpg", "Palak Khichadi.webp", "Curd Rice.jpg", "Chicken Dal Khichadi.jfif", "Mutton Dal Khichadi.jfif", "Prawns Dal Khichadi.jfif", "Chicken Malwani.jpg", "Mutton Malwani.jpg", "Prawns Malwani.jpg", "Murg Musallam.jpg", "Chicken Bhuna.jpg", "Mutton Bhuna.jpg", "Tandoori Biryani.webp", "Tandoori Fried Rice.jpg", "Tandoori Triple Rice.webp", "Chicken Pot Rice.jpg"];
+const CDN_URL = 'https://res.cloudinary.com/djgz8pjir/image/upload/';
+
+function getDishImg(name, cat) {
+  if (!name) return catImg(cat);
+  
+  // GLOBAL IMAGE OVERRIDE (Fixes mobile view mismatch)
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('butter') && lowerName.includes('chapati')) {
+    return 'white/images/Butter-Chapati.jpg';
+  }
+
+  const overrides = {
+    'Chicken American Choupsey': 'https://images.pexels.com/photos/2347311/pexels-photo-2347311.jpeg?auto=compress&cs=tinysrgb&w=600',
+    'Prawns Ginger': 'https://images.pexels.com/photos/3763347/pexels-photo-3763347.jpeg?auto=compress&cs=tinysrgb&w=600'
+  };
+  if (overrides[name]) return overrides[name];
+  const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const target = norm(name);
+  let match = LOCAL_IMAGES.find(img => norm(img.split('.')[0]) === target);
+  if (!match) { match = LOCAL_IMAGES.find(img => { const base = norm(img.split('.')[0]); return target.includes(base) || base.includes(target); }); }
+  if (match) {
+    const finalId = match.split('.')[0].replace(/\s+/g, '_').replace(/[()]/g, '').replace(/[^a-z0-9_-]/gi, '_').replace(/_+/g, '_').replace(/^_|_$/g, "");
+    return `${CDN_URL}f_auto,q_auto/${finalId}`;
+  }
+  return catImg(cat);
+}
+
+function loadMenu() {
+  try {
+    const s = localStorage.getItem(MENU_STORAGE_KEY);
+    let items = s ? JSON.parse(s) : JSON.parse(JSON.stringify(DEFAULT_MENU));
+    items = items.map(item => {
+      // Force correct image for Butter Chapati
+      if (item.id === 104 || (item.name && item.name.toLowerCase().includes('butter') && item.name.toLowerCase().includes('chapati'))) {
+        item.imageUrl = 'white/images/Butter-Chapati.jpg';
+      } else if (!item.imageUrl || item.imageUrl.includes('cloudinary.com') || item.imageUrl.includes('unsplash.com') || item.imageUrl.includes('tamarindnthyme.com')) {
+        item.imageUrl = getDishImg(item.name, item.category);
+      }
+      return item;
+    });
+    return items;
+  } catch (e) { return JSON.parse(JSON.stringify(DEFAULT_MENU)); }
+}
+
+function saveMenu(items) { localStorage.setItem(MENU_STORAGE_KEY, JSON.stringify(items)); }
+function getNextId(items) { return items.length ? Math.max(...items.map(i => i.id)) + 1 : 1; }
+function m(id, name, price, cat, tags, img, halfPrice) { return { id, name, price, category: cat, tags: tags || [], imageUrl: img || getDishImg(name, cat), isAvailable: true, halfPrice: halfPrice || null, description: '', createdAt: '2024-01-01' }; }
+
+const DEFAULT_MENU = [
+  m(1, 'Chicken Tandoori (Full)', 390, 'Non-Veg Starters', ['Bestseller']),
+  m(2, 'Chicken Tandoori (Half)', 220, 'Non-Veg Starters', []),
+  m(3, 'Tandoori Roasted Leg Piece', 140, 'Non-Veg Starters', ['Trending']),
+  m(4, 'Chicken Tikka (8pcs)', 270, 'Non-Veg Starters', ['Bestseller']),
+  m(5, 'Chicken Reshmi Kabab (8pcs)', 290, 'Non-Veg Starters', []),
+  m(6, 'Chicken Pudina Kabab', 290, 'Non-Veg Starters', []),
+  m(7, 'Mix Kabab', 290, 'Non-Veg Starters', []),
+  m(8, 'Chicken Lollypop (Half)', 140, 'Non-Veg Starters', []),
+  m(9, 'Chicken Lollypop (8pcs)', 240, 'Non-Veg Starters', ['Bestseller']),
+  m(10, 'Chicken Masala Lollypop (F/H)', 310, 'Non-Veg Starters', [], null, 170),
+  m(11, 'Tandoori Schezwan (F/H)', 450, 'Non-Veg Starters', ['Trending'], null, 240),
+  m(12, 'Chicken Crispy', 280, 'Non-Veg Starters', []),
+  m(13, 'Veg Crispy', 230, 'Veg Starters', []),
+  m(14, 'Paneer Crispy', 280, 'Veg Starters', []),
+  m(15, 'Paneer Tikka', 280, 'Veg Starters', ['Bestseller']),
+  m(16, 'Veg Hara Bhara Kabab', 250, 'Veg Starters', []),
+  m(17, 'Paneer Schezwan', 250, 'Veg Starters', []),
+  m(18, 'Paneer Chilly', 250, 'Veg Starters', []),
+  m(19, 'Paplet / Surmai Masala', 350, 'Fish Special', ['Trending']),
+  m(20, 'Paplet / Surmai Fry', 350, 'Fish Special', []),
+  m(21, 'Prawns Masala', 330, 'Fish Special', []),
+  m(22, 'Prawns Koliwada', 330, 'Fish Special', []),
+  m(23, 'Egg Masala', 160, 'Fish Special', []),
+  m(24, 'Egg Burji', 90, 'Fish Special', []),
+  m(25, 'Egg Omlet', 90, 'Fish Special', []),
+  m(26, 'Chicken Dum Biryani (Full)', 180, 'Rice Speciality', ['Bestseller', 'Trending']),
+  m(27, 'Chicken Dum Biryani (Half)', 130, 'Rice Speciality', ['Bestseller']),
+  m(28, 'Chicken Tikka Biryani', 250, 'Rice Speciality', ['Trending']),
+  m(29, 'Tava Fry Rice', 220, 'Rice Speciality', []),
+  m(30, 'Tandoori Biryani', 230, 'Rice Speciality', ['Featured']),
+  m(31, 'Chicken Pulav', 210, 'Rice Speciality', []),
+  m(32, 'Mutton Biryani (Full)', 350, 'Rice Speciality', ['Bestseller']),
+  m(33, 'Mutton Biryani (Half)', 230, 'Rice Speciality', []),
+  m(34, 'Mutton Pulav', 350, 'Rice Speciality', []),
+  m(35, 'Prawns Biryani', 350, 'Rice Speciality', ['Trending']),
+  m(36, 'Prawns Pulav', 350, 'Rice Speciality', []),
+  m(37, 'Egg Biryani (Full)', 160, 'Rice Speciality', []),
+  m(38, 'Egg Biryani (Half)', 120, 'Rice Speciality', []),
+  m(39, 'Veg Biryani (F/H)', 160, 'Rice Speciality', [], null, 100),
+  m(40, 'Paneer Tikka Biryani', 210, 'Rice Speciality', ['Featured']),
+  m(41, 'Paneer Biryani', 190, 'Rice Speciality', []),
+  m(42, 'Paneer Pulav', 190, 'Rice Speciality', []),
+  m(43, 'Veg Pulav', 160, 'Rice Speciality', []),
+  m(44, 'Jeera Rice (F/H)', 110, 'Rice Speciality', [], null, 70),
+  m(45, 'Steam Rice', 90, 'Rice Speciality', []),
+  m(46, 'Steam Rice (Half)', 60, 'Rice Speciality', []),
+  m(47, 'Chicken Moghlai (Full)', 240, 'Punjabi Chicken', ['Bestseller']),
+  m(48, 'Chicken Moghlai (Half)', 180, 'Punjabi Chicken', []),
+  m(49, 'Chicken Masala (Full)', 210, 'Punjabi Chicken', []),
+  m(50, 'Chicken Masala (Half)', 170, 'Punjabi Chicken', []),
+  m(51, 'Chicken Kadai (Full)', 240, 'Punjabi Chicken', ['Trending']),
+  m(52, 'Chicken Kadai (Half)', 180, 'Punjabi Chicken', []),
+  m(53, 'Chicken 2 Pyaza', 240, 'Punjabi Chicken', []),
+  m(54, 'Chicken 2 Pyaza (Half)', 180, 'Punjabi Chicken', []),
+  m(55, 'Chicken Palak', 240, 'Punjabi Chicken', []),
+  m(56, 'Butter Chicken', 280, 'Punjabi Chicken', ['Bestseller', 'Featured']),
+  m(57, 'Chicken Kolhapuri', 250, 'Punjabi Chicken', []),
+  m(58, 'Chicken Tikka Masala', 250, 'Punjabi Chicken', ['Trending']),
+  m(59, 'Chicken Afghani', 250, 'Punjabi Chicken', []),
+  m(60, 'Chicken Handi (Full)', 470, 'Punjabi Chicken', []),
+  m(61, 'Chicken Handi (Half)', 250, 'Punjabi Chicken', []),
+  m(62, 'Mutton Moghlai (Full)', 350, 'Punjabi Mutton', ['Bestseller']),
+  m(63, 'Mutton Moghlai (Half)', 230, 'Punjabi Mutton', []),
+  m(64, 'Mutton Masala (Full)', 340, 'Punjabi Mutton', []),
+  m(65, 'Mutton Masala (Half)', 220, 'Punjabi Mutton', []),
+  m(66, 'Mutton Kadai (Full)', 350, 'Punjabi Mutton', ['Trending']),
+  m(67, 'Mutton Kadai (Half)', 230, 'Punjabi Mutton', []),
+  m(68, 'Mutton 2 Pyaza (Full)', 350, 'Punjabi Mutton', []),
+  m(69, 'Mutton 2 Pyaza', 230, 'Punjabi Mutton', []),
+  m(70, 'Mutton Rogan Ghosh', 350, 'Punjabi Mutton', []),
+  m(71, 'Mutton Palak', 350, 'Punjabi Mutton', []),
+  m(72, 'Mutton Handi (Full)', 590, 'Punjabi Mutton', []),
+  m(73, 'Mutton Handi (Half)', 350, 'Punjabi Mutton', []),
+  m(74, 'Alu Mutter', 170, 'Veg Punjabi', []),
+  m(75, 'Chana Masala', 170, 'Veg Punjabi', []),
+  m(76, 'Bhendi Masala', 170, 'Veg Punjabi', []),
+  m(77, 'Alu Gobi', 170, 'Veg Punjabi', []),
+  m(78, 'Bhendi Fry', 170, 'Veg Punjabi', []),
+  m(79, 'Gobi Masala', 170, 'Veg Punjabi', []),
+  m(80, 'Mixed Vegetable', 170, 'Veg Punjabi', []),
+  m(81, 'Veg Kadai', 190, 'Veg Punjabi', []),
+  m(82, 'Veg Jalfraize', 200, 'Veg Punjabi', []),
+  m(83, 'Veg Makhawala', 210, 'Veg Punjabi', []),
+  m(84, 'Veg Kolhapuri', 200, 'Veg Punjabi', []),
+  m(85, 'Mushroom Masala', 240, 'Veg Punjabi', ['Trending']),
+  m(86, 'Mushroom Kadai', 250, 'Veg Punjabi', []),
+  m(87, 'Mushroom Tikka Masala', 260, 'Veg Punjabi', []),
+  m(88, 'Palak Mutter', 180, 'Veg Punjabi', []),
+  m(89, 'Alu Palak', 170, 'Veg Punjabi', []),
+  m(90, 'Alu Jeera', 170, 'Veg Punjabi', []),
+  m(91, 'Dal Fry', 150, 'Veg Punjabi', []),
+  m(92, 'Dal Tadka', 160, 'Veg Punjabi', []),
+  m(93, 'Dal Kolhapuri', 170, 'Veg Punjabi', []),
+  m(94, 'Paneer Masala', 210, 'Paneer Dishes', []),
+  m(95, 'Paneer Butter Masala', 240, 'Paneer Dishes', ['Bestseller']),
+  m(96, 'Paneer Mutter', 210, 'Paneer Dishes', []),
+  m(97, 'Paneer Palak', 210, 'Paneer Dishes', []),
+  m(98, 'Paneer Makhawala', 240, 'Paneer Dishes', ['Featured']),
+  m(99, 'Paneer Kolhapuri', 240, 'Paneer Dishes', []),
+  m(100, 'Paneer Kadai', 240, 'Paneer Dishes', []),
+  m(101, 'Paneer Tikka Masala', 240, 'Paneer Dishes', ['Trending']),
+  m(102, 'Shahi Paneer', 240, 'Paneer Dishes', []),
+  m(103, 'Chapati', 12, 'Roti Items', []),
+  m(104, 'Butter-Chapati', 16, 'Roti Items', [], 'white/images/Butter-Chapati.jpg'),
+  m(105, 'Roti (Atta)', 20, 'Roti Items', []),
+  m(106, 'Butter Roti', 27, 'Roti Items', []),
+  m(107, 'Naan', 35, 'Roti Items', []),
+  m(108, 'Butter Naan', 45, 'Roti Items', ['Bestseller']),
+  m(109, 'Parotha', 35, 'Roti Items', []),
+  m(110, 'Butter Parotha', 45, 'Roti Items', []),
+  m(111, 'Kulcha', 30, 'Roti Items', []),
+  m(112, 'Butter Kulcha', 40, 'Roti Items', []),
+  m(113, 'Masala Kulcha', 120, 'Roti Items', []),
+  m(114, 'Onion Kulcha', 120, 'Roti Items', []),
+  m(115, 'Paneer Kulcha', 140, 'Roti Items', ['Trending']),
+  m(116, 'Garlic Naan', 90, 'Roti Items', ['Bestseller']),
+  m(117, 'Alu Parotha', 130, 'Roti Items', []),
+  m(118, 'Stuffed Parotha', 130, 'Roti Items', []),
+  m(119, 'Pudina Parotha', 130, 'Roti Items', []),
+  m(120, 'Methi Parotha', 130, 'Roti Items', []),
+  m(121, 'Veg Sweet Corn Soup', 120, 'Chinese Veg Soup', []),
+  m(122, 'Veg Hot & Sour Soup', 120, 'Chinese Veg Soup', []),
+  m(123, 'Veg Manchow Soup', 120, 'Chinese Veg Soup', []),
+  m(124, 'Veg Clear Soup', 120, 'Chinese Veg Soup', []),
+  m(125, 'Chicken Sweet Corn Soup', 130, 'Non-Veg Soup', []),
+  m(126, 'Chicken Hot & Sour Soup', 130, 'Non-Veg Soup', []),
+  m(127, 'Chicken Manchow Soup', 130, 'Non-Veg Soup', ['Bestseller']),
+  m(128, 'Chicken Clear Soup', 130, 'Non-Veg Soup', []),
+  m(129, 'Veg Fried Rice', 170, 'Rice Dishes (Veg)', []),
+  m(130, 'Veg Schezwan Rice', 180, 'Rice Dishes (Veg)', []),
+  m(131, 'Veg Singapore Fried Rice', 200, 'Rice Dishes (Veg)', []),
+  m(132, 'Veg Hong Kong Fried Rice', 200, 'Rice Dishes (Veg)', []),
+  m(133, 'Veg Manchurian Fried Rice', 220, 'Rice Dishes (Veg)', []),
+  m(134, 'Veg 3 in 1 Fried Rice', 230, 'Rice Dishes (Veg)', []),
+  m(135, 'Veg Triple Fried Rice', 230, 'Rice Dishes (Veg)', []),
+  m(136, 'Paneer Fried Rice', 190, 'Rice Dishes (Veg)', []),
+  m(137, 'Paneer Schezwan Fried Rice', 200, 'Rice Dishes (Veg)', []),
+  m(138, 'Veg Hakka Noodles', 170, 'Veg Noodles', []),
+  m(139, 'Veg Schezwan Noodles', 180, 'Veg Noodles', []),
+  m(140, 'Veg Singapore Noodles', 200, 'Veg Noodles', []),
+  m(141, 'Veg Manchurian Noodles', 220, 'Veg Noodles', []),
+  m(142, 'Veg Triple Noodles', 230, 'Veg Noodles', []),
+  m(143, 'Veg Chinese Choupsey', 230, 'Veg Choupsuey', []),
+  m(144, 'Veg American Choupsey', 230, 'Veg Choupsuey', []),
+  m(145, 'Veg Manchurian (Dry/Gravy)', 190, 'Veg Gravy', []),
+  m(146, 'Veg Garlic (Dry/Gravy)', 190, 'Veg Gravy', []),
+  m(147, 'Veg Ginger (Dry/Gravy)', 190, 'Veg Gravy', []),
+  m(148, 'Veg Schezwan (Dry/Gravy)', 190, 'Veg Gravy', []),
+  m(149, 'Mushroom Chilly (Dry/Gravy)', 250, 'Veg Gravy', []),
+  m(150, 'Paneer Manchurian (Dry/Gravy)', 240, 'Veg Gravy', []),
+  m(151, 'Mushroom Manchurian (D/G)', 240, 'Veg Gravy', []),
+  m(152, 'Chicken Fried Rice', 190, 'Rice Dishes (Veg)', ['Trending']),
+  m(153, 'Chicken Schezwan Fried Rice', 200, 'Rice Dishes (Veg)', []),
+  m(154, 'Chicken Triple Fried Rice', 270, 'Rice Dishes (Veg)', []),
+  m(155, 'Chicken Singapore Fried Rice', 230, 'Rice Dishes (Veg)', []),
+  m(156, 'Chicken Manchurian Fried Rice', 250, 'Rice Dishes (Veg)', []),
+  m(157, 'Egg Fried Rice', 180, 'Rice Dishes (Veg)', []),
+  m(158, 'Egg Schezwan Fried Rice', 190, 'Rice Dishes (Veg)', []),
+  m(159, 'Hong Kong Fried Rice', 230, 'Rice Dishes (Veg)', []),
+  m(160, 'Chicken Chilly Fried Rice', 280, 'Rice Dishes (Veg)', []),
+  m(161, 'Chicken Hakka Noodles', 190, 'Chicken Noodles', ['Bestseller']),
+  m(162, 'Chicken Schezwan Noodles', 200, 'Chicken Noodles', []),
+  m(163, 'Chicken Manchurian Noodles', 250, 'Chicken Noodles', []),
+  m(164, 'Chicken Triple Noodles', 270, 'Chicken Noodles', []),
+  m(165, 'Egg Hakka Noodles', 180, 'Chicken Noodles', []),
+  m(166, 'Egg Schezwan Noodles', 190, 'Chicken Noodles', []),
+  m(167, 'Chicken Manchurian (Dry/Gravy)', 240, 'Chicken Gravy', ['Trending']),
+  m(168, 'Chicken Chilly (Dry/Gravy)', 250, 'Chicken Gravy', []),
+  m(169, 'Chicken Garlic (Dry/Gravy)', 250, 'Chicken Gravy', []),
+  m(170, 'Chicken Schezwan (Dry/Gravy)', 240, 'Chicken Gravy', []),
+  m(171, 'Chicken 65', 240, 'Chicken Gravy', ['Bestseller']),
+  m(172, 'Chicken Hot Chilly', 280, 'Chicken Gravy', []),
+  m(173, 'Chicken American Choupsey', 250, 'Non-Veg Choupsuey', [], 'https://images.pexels.com/photos/2347311/pexels-photo-2347311.jpeg?auto=compress&cs=tinysrgb&w=600'),
+  m(174, 'Prawns Fried Rice', 320, 'Prawns Special', []),
+  m(175, 'Prawns Schezwan Fried Rice', 330, 'Prawns Special', []),
+  m(176, 'Mix Fried Rice', 320, 'Prawns Special', []),
+  m(177, 'Mix Schezwan Fried Rice', 330, 'Prawns Special', []),
+  m(178, 'Prawns Schezwan Noodles', 330, 'Prawns Special', []),
+  m(179, 'Prawns Hakka Noodles', 320, 'Prawns Special', []),
+  m(180, 'Mix Schezwan Noodles', 320, 'Prawns Special', []),
+  m(181, 'Prawns Chilly (Dry/Gravy)', 360, 'Prawns Special', ['Trending']),
+  m(182, 'Prawns Garlic (Dry/Gravy)', 360, 'Prawns Special', []),
+  m(183, 'Prawns Ginger', 360, 'Prawns Special', []),
+  m(184, 'Prawns Schezwan (Dry/Gravy)', 360, 'Prawns Special', []),
+  m(185, 'Prawns Manchurian (Dry/Gravy)', 360, 'Prawns Special', []),
+  m(186, 'Roasted Papad', 20, 'Papad & Raita', []),
+  m(187, 'Fry Papad', 25, 'Papad & Raita', []),
+  m(188, 'Masala Papad', 50, 'Papad & Raita', []),
+  m(189, 'Veg Raita', 70, 'Papad & Raita', []),
+  m(190, 'Boondi Raita', 80, 'Papad & Raita', []),
+  m(191, 'Butter Milk', 25, 'Papad & Raita', []),
+  m(192, 'Green Salad', 70, 'Papad & Raita', []),
+  m(193, 'Chicken Biryani (Kg)', 900, 'Kilo Special', ['Bestseller', 'Featured']),
+  m(194, 'Chicken Tikka Biryani (Kg)', 1200, 'Kilo Special', []),
+  m(195, 'Mutton Biryani (Kg)', 1900, 'Kilo Special', ['Trending']),
+  m(196, 'Prawns Biryani (Kg)', 1900, 'Kilo Special', []),
+  m(197, 'Veg Biryani/Pulav (Kg)', 700, 'Kilo Special', []),
+  m(198, 'Paneer Tikka Biryani (Kg)', 1100, 'Kilo Special', []),
+  m(199, 'Tandoori Biryani (Kg)', 1100, 'Kilo Special', []),
+  m(200, 'Chicken Tikka Masala (Kg)', 1500, 'Kilo Special', []),
+  m(201, 'Dal Ghost (Kg)', 1500, 'Kilo Special', []),
+  m(202, 'Dal Khichadi', 160, 'Kichadi Special', []),
+  m(203, 'Palak Khichadi', 160, 'Kichadi Special', []),
+  m(204, 'Curd Rice', 150, 'Kichadi Special', []),
+  m(205, 'Chicken Dal Khichadi', 220, 'Kichadi Special', []),
+  m(206, 'Mutton Dal Khichadi', 330, 'Kichadi Special', []),
+  m(207, 'Prawns Dal Khichadi', 330, 'Kichadi Special', []),
+  m(208, 'Chicken Malwani', 250, 'Malwani Special', ['Trending']),
+  m(209, 'Mutton Malwani', 350, 'Malwani Special', []),
+  m(210, 'Prawns Malwani', 350, 'Malwani Special', []),
+  m(211, 'Murg Musallam (F/H)', 800, 'Moghlai Special', ['Featured'], null, 450),
+  m(212, 'Chicken Bhuna', 280, 'Moghlai Special', []),
+  m(213, 'Mutton Bhuna', 350, 'Moghlai Special', []),
+  m(214, 'Tandoori Biryani (Special)', 230, 'Rice Special', []),
+  m(215, 'Tandoori Fried Rice', 220, 'Rice Special', []),
+  m(216, 'Tandoori Triple Rice', 280, 'Rice Special', []),
+  m(217, 'Chicken Pot Rice', 250, 'Rice Special', [])
+];
+
+// --- APP LOGIC ---
+const WA_NUMBER = '918657707050';
+const CART_KEY = 'fbc_cart_white';
+const POPULAR_IDS = [1, 4, 9, 26, 27, 28, 32, 47, 51, 56, 58, 95, 116, 161, 171, 193, 194, 195];
+
+let menuItems = loadMenu();
+setInterval(() => {
+  const fresh = loadMenu();
+  if (JSON.stringify(fresh) !== JSON.stringify(menuItems)) {
+    menuItems = fresh;
+    renderMenu();
+  }
+}, 5000);
+
+let cart = JSON.parse(localStorage.getItem(CART_KEY) || '[]');
+let activeCategory = 'All';
+let searchQuery = '';
+let selectedVariants = {}; // Tracks F/H selection per item ID
+
+function buildCatPills() {
+  const row = document.getElementById('cat-row');
+  const cats = ['All', ...[...new Set(menuItems.map(i=>i.category))]];
+  row.innerHTML = cats.map(c => {
+    const isActive = c === activeCategory;
+    const baseClass = "flex flex-col items-center justify-center px-4 py-2 rounded-xl flex-shrink-0 font-bold text-xs border transition-all whitespace-nowrap";
+    const activeClass = isActive ? "bg-orange-500 text-white border-orange-500 shadow-md" : "bg-white text-stone-600 border-stone-200 hover:bg-stone-50";
+    return `<button class="${baseClass} ${activeClass}" onclick="setCat('${c}')">${c}</button>`;
+  }).join('');
+}
+
+function setCat(cat) {
+  activeCategory = cat;
+  buildCatPills();
+  renderMenu();
+}
+
+function filterMenu() {
+  searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+  const main = document.getElementById('main-content');
+  const banner = document.getElementById('search-banner');
+  const bannerText = document.getElementById('search-banner-text');
+  
+  if (searchQuery) {
+    main.classList.add('search-active');
+    banner.classList.remove('hidden');
+    bannerText.textContent = `Searching "${searchQuery}"...`;
+  } else {
+    main.classList.remove('search-active');
+    banner.classList.add('hidden');
+  }
+  renderMenu();
+}
+
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  filterMenu();
+}
+
+function renderMenu() {
+  const grid = document.getElementById('menu-grid');
+  let items = menuItems;
+  if (searchQuery) {
+    items = items.filter(i => i.name.toLowerCase().includes(searchQuery) || i.category.toLowerCase().includes(searchQuery));
+  }
+  if (activeCategory !== 'All') {
+    items = items.filter(i => i.category === activeCategory);
+  }
+  
+  if (!items.length) {
+    grid.innerHTML = '<div class="col-span-full text-center py-10 text-stone-400 font-medium text-sm">No items found 😕</div>';
+    grid.className = "block";
+    return;
+  }
+  grid.className = "grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3";
+
+  grid.innerHTML = items.map(item => {
+    const inCart = cart.find(c => c.id === item.id);
+    const nonVegKeywords = /Chicken|Mutton|Fish|Prawns|Egg|Ch |Murg|Gosht|Paplet|Surmai/i;
+    const isVeg = !nonVegKeywords.test(item.name) && ['Veg Starters','Veg Punjabi','Paneer Dishes','Chinese Veg Soup','Roti Items','Rice Dishes (Veg)','Veg Noodles','Veg Choupsuey','Veg Gravy','Papad & Raita','Kichadi Special','Rice Speciality'].includes(item.category);
+    
+    const vegIcon = isVeg 
+      ? `<span class="w-3 h-3 border border-green-500 flex justify-center items-center rounded-sm bg-white shrink-0"><span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span></span>`
+      : `<span class="w-3 h-3 border border-red-500 flex justify-center items-center rounded-sm bg-white shrink-0"><span class="w-1.5 h-1.5 bg-red-500 rounded-full"></span></span>`;
+
+    const hasHalf = !!item.halfPrice;
+    const currentVariant = selectedVariants[item.id] || 'Full';
+    const currentPrice = currentVariant === 'Half' ? item.halfPrice : item.price;
+    const cartItem = cart.find(c => c.id === item.id && c.variant === currentVariant);
+
+    const qtyHtml = item.isAvailable ? (cartItem ? `
+      <div class="flex items-center justify-between w-full bg-orange-50 rounded-lg p-1 border border-orange-100">
+        <button onclick="changeQty(${item.id},-1,'${currentVariant}')" class="w-7 h-7 flex items-center justify-center text-orange-600 font-bold bg-white rounded-md shadow-sm">−</button>
+        <span class="font-bold text-orange-600 text-sm w-4 text-center">${cartItem.qty}</span>
+        <button onclick="changeQty(${item.id},1,'${currentVariant}')" class="w-7 h-7 flex items-center justify-center text-white font-bold bg-orange-500 rounded-md shadow-sm">+</button>
+      </div>
+    ` : `
+      <button onclick="addToCart(${item.id},'${currentVariant}')" class="w-full bg-white border-2 border-stone-100 text-stone-700 py-2 rounded-lg font-bold text-xs active:bg-stone-50 transition-colors shadow-sm hover:border-orange-200">ADD</button>
+    `) : `
+      <div class="w-full bg-stone-50 text-stone-400 py-2 rounded-lg font-bold text-[10px] text-center border border-stone-100 uppercase tracking-tighter">Sold Out</div>
+    `;
+
+    const variantSelector = hasHalf ? `
+      <div class="flex bg-stone-100 p-1 rounded-lg mb-2">
+        <button onclick="setVariant(${item.id},'Full')" class="flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${currentVariant === 'Full' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'}">Full</button>
+        <button onclick="setVariant(${item.id},'Half')" class="flex-1 py-1 text-[9px] font-black uppercase rounded-md transition-all ${currentVariant === 'Half' ? 'bg-white text-stone-900 shadow-sm' : 'text-stone-400'}">Half</button>
+      </div>
+    ` : '';
+
+    // Definitive Butter Chapati Fix
+    let displayImg = item.imageUrl;
+    if (/butter/i.test(item.name) && /chapati/i.test(item.name)) {
+      displayImg = 'white/images/Butter-Chapati.jpg';
+    }
+
+    return `
+      <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 flex flex-col h-full ${!item.isAvailable ? 'opacity-60' : ''}">
+        <div class="relative aspect-square overflow-hidden bg-stone-50">
+          <img 
+            src="${displayImg}" 
+            loading="lazy"
+            class="w-full h-full object-cover ${!item.isAvailable ? 'grayscale-[0.5]' : ''}" 
+            onerror="this.onerror=null; this.src=catImg('${item.category}')">
+          ${!item.isAvailable ? '<div class="absolute inset-0 bg-stone-900/10 flex items-center justify-center"><span class="bg-white/90 backdrop-blur-md px-2 py-0.5 rounded text-[8px] font-black uppercase text-stone-900 shadow-sm border border-stone-100">Unavailable</span></div>' : ''}
+        </div>
+        <div class="p-3 flex flex-col flex-1">
+          <div class="flex items-start gap-1.5 mb-2">
+            ${vegIcon}
+            <h4 class="font-bold text-stone-800 text-[11px] leading-tight flex-1 line-clamp-2">${item.name}</h4>
+          </div>
+          ${variantSelector}
+          <div class="mt-auto">
+            <div class="font-extrabold text-stone-900 text-sm mb-2">₹${currentPrice}</div>
+            ${qtyHtml}
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+function setVariant(id, variant) {
+  selectedVariants[id] = variant;
+  renderMenu();
+}
+
+function togglePayment() {
+  const section = document.getElementById('payment-section');
+  const btn = document.getElementById('pay-btn');
+  const isHidden = section.classList.contains('hidden');
+  
+  if (isHidden) {
+    const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const upiUrl = `upi://pay?pa=tabsaiyyad@okicici&pn=Famous%20Biryani%20Corner&am=${total}&cu=INR&tn=OrderPayment`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUrl)}`;
+    document.getElementById('upi-qr').src = qrUrl;
+    section.classList.remove('hidden');
+    section.classList.add('flex');
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span> Hide QR';
+    btn.classList.replace('bg-orange-500', 'bg-stone-800');
+  } else {
+    section.classList.add('hidden');
+    section.classList.remove('flex');
+    btn.innerHTML = '<span class="material-symbols-outlined text-[18px]">payments</span> Pay Now';
+    btn.classList.replace('bg-stone-800', 'bg-orange-500');
+  }
+}
+
+function addToCart(id, variant = 'Full') {
+  const item = menuItems.find(i => i.id === id);
+  if (!item) return;
+  const price = variant === 'Half' ? item.halfPrice : item.price;
+  cart.push({ id: item.id, name: item.name, price: price, imageUrl: item.imageUrl, qty: 1, variant: variant });
+  saveCart();
+  renderMenu();
+  showToast(`Added ${item.name} (${variant})`);
+}
+
+function changeQty(id, delta, variant = 'Full') {
+  const idx = cart.findIndex(c => c.id === id && c.variant === variant);
+  if (idx < 0) return;
+  cart[idx].qty += delta;
+  if (cart[idx].qty <= 0) cart.splice(idx, 1);
+  saveCart();
+  renderMenu();
+  if (document.getElementById('cart-modal').classList.contains('open')) renderCartModal();
+}
+
+function saveCart() {
+  localStorage.setItem(CART_KEY, JSON.stringify(cart));
+  updateCartBadges();
+}
+
+function updateCartBadges() {
+  const count = cart.reduce((a, c) => a + c.qty, 0);
+  
+  const fab = document.getElementById('cart-fab');
+  const fabCount = document.getElementById('fab-cart-count');
+  const navBadge = document.getElementById('nav-cart-badge');
+  
+  if (count > 0) {
+    fab.classList.remove('hidden');
+    navBadge.classList.remove('hidden');
+    fabCount.textContent = count;
+    navBadge.textContent = count;
+  } else {
+    fab.classList.add('hidden');
+    navBadge.classList.add('hidden');
+  }
+}
+
+function openCart() {
+  renderCartModal();
+  document.getElementById('cart-modal').classList.add('open');
+}
+
+function closeCartModal() {
+  document.getElementById('cart-modal').classList.remove('open');
+}
+
+function openProfile() {
+  const profile = JSON.parse(localStorage.getItem('fbc_user_profile') || '{}');
+  document.getElementById('prof-name').value = profile.name || '';
+  document.getElementById('prof-addr').value = profile.address || '';
+  document.getElementById('prof-phone').value = profile.phone || '';
+  document.getElementById('profile-modal').classList.add('open');
+}
+
+function closeProfile() {
+  document.getElementById('profile-modal').classList.remove('open');
+}
+
+function saveProfile() {
+  const profile = {
+    name: document.getElementById('prof-name').value,
+    address: document.getElementById('prof-addr').value,
+    phone: document.getElementById('prof-phone').value
+  };
+  localStorage.setItem('fbc_user_profile', JSON.stringify(profile));
+  showToast('Profile saved successfully!');
+  closeProfile();
+}
+
+function renderCartModal() {
+  const list = document.getElementById('cart-items-list');
+  const footer = document.getElementById('cart-footer');
+  
+  if (!cart.length) {
+    list.innerHTML = `<div class="text-center py-10"><span class="material-symbols-outlined text-[60px] text-stone-200 mb-2">shopping_basket</span><p class="text-stone-500 font-medium text-sm">Your cart is empty</p></div>`;
+    footer.classList.add('hidden');
+    footer.classList.remove('flex');
+    return;
+  }
+  
+  footer.classList.remove('hidden');
+  footer.classList.add('flex');
+  
+  list.innerHTML = cart.map(c => `
+    <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-stone-100 shadow-sm">
+      <img src="${c.imageUrl}" class="w-12 h-12 rounded-lg object-cover bg-stone-50" onerror="this.src='https://images.unsplash.com/photo-1546833998-877b37c2e582?w=100'">
+      <div class="flex-1">
+        <h4 class="font-bold text-stone-800 text-xs">${c.name} ${c.variant ? `<span class="text-[10px] text-orange-600">(${c.variant})</span>` : ''}</h4>
+        <div class="text-orange-600 font-extrabold text-[13px] mt-0.5">₹${c.price * c.qty}</div>
+      </div>
+      <div class="flex items-center gap-2 bg-stone-50 p-1 rounded-lg border border-stone-200">
+        <button onclick="changeQty(${c.id},-1,'${c.variant || 'Full'}')" class="w-6 h-6 flex items-center justify-center text-stone-600 font-bold bg-white rounded shadow-sm">−</button>
+        <span class="font-bold text-stone-800 text-xs w-3 text-center">${c.qty}</span>
+        <button onclick="changeQty(${c.id},1,'${c.variant || 'Full'}')" class="w-6 h-6 flex items-center justify-center text-white font-bold bg-stone-800 rounded shadow-sm">+</button>
+      </div>
+    </div>
+  `).join('');
+  
+  const total = cart.reduce((a, c) => a + c.price * c.qty, 0);
+  document.getElementById('cart-total-amt').textContent = '₹' + total;
+
+  // Auto-fill checkout fields from profile
+  const profile = JSON.parse(localStorage.getItem('fbc_user_profile') || '{}');
+  if (profile.name) document.getElementById('cust-name').value = profile.name;
+  if (profile.address) document.getElementById('cust-addr').value = profile.address;
+}
+
+function placeOrder(type) {
+  if (!cart.length) return;
+  
+  const name = document.getElementById('cust-name').value || 'Guest';
+  const addr = document.getElementById('cust-addr').value || 'Not provided';
+  const orderId = '#' + Math.floor(Math.random() * 90000 + 10000);
+  const total = cart.reduce((s, i) => s + (i.price * i.qty), 0);
+  
+  // LOG ORDER FOR ADMIN PANEL
+  const orderLog = JSON.parse(localStorage.getItem('fbc_orders_log') || '[]');
+  const newOrder = {
+    id: orderId,
+    customerName: name,
+    address: addr,
+    items: cart,
+    total: total,
+    type: type,
+    timestamp: new Date().toISOString(),
+    status: 'Pending'
+  };
+  orderLog.unshift(newOrder);
+  localStorage.setItem('fbc_orders_log', JSON.stringify(orderLog.slice(0, 100))); // Keep last 100
+
+  // PREPARE MESSAGE
+  let msg = `*NEW ORDER ${orderId}*\n`;
+  msg += `--------------------------\n`;
+  msg += `👤 *Name:* ${name}\n`;
+  msg += `📍 *Addr:* ${addr}\n`;
+  msg += `--------------------------\n`;
+  cart.forEach(i => {
+    msg += `• ${i.name} x ${i.qty} = ₹${i.price * i.qty}\n`;
+  });
+  msg += `--------------------------\n`;
+  msg += `*TOTAL: ₹${total}*\n`;
+  msg += `*Method:* ${type === 'whatsapp' ? 'Cash on Delivery / WhatsApp' : 'UPI Paid (Pending Verification)'}\n`;
+  msg += `--------------------------\n`;
+  msg += `_Sent via Famous Biryani App_`;
+
+  const url = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`;
+  
+  // Update state
+  updateLiveTracking();
+
+  // Clear cart and close modal
+  cart = [];
+  saveCart();
+  closeCartModal();
+  renderMenu();
+  updateCartBadges();
+  
+  // Open WhatsApp
+  setTimeout(() => {
+    window.open(url, '_blank');
+  }, 100);
+}
+
+function toggleTracker() {
+  const t = document.getElementById('order-tracker');
+  t.classList.toggle('translate-y-full');
+}
+
+function callRestaurant(num) {
+  window.location.href = `tel:${num}`;
+}
+
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.remove('opacity-0', 'translate-y-4');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.add('opacity-0', 'translate-y-4'), 2000);
+}
+
+function hideTracker() {
+  document.getElementById('order-tracker').classList.add('translate-y-full');
+}
+
+function updateLiveTracking() {
+  const orders = JSON.parse(localStorage.getItem('fbc_orders_log') || '[]');
+  const trackFab = document.getElementById('track-fab');
+  const trackIconFab = document.getElementById('track-fab-icon');
+
+  if (!orders.length) {
+    trackFab.classList.add('hidden');
+    return;
+  }
+
+  const lastOrder = orders[0];
+  const tracker = document.getElementById('order-tracker');
+  const title = document.getElementById('track-status-title');
+  const idEl = document.getElementById('track-order-id');
+  const icon = document.getElementById('track-icon');
+  const animBox = document.getElementById('track-animation-box');
+  const bike = document.getElementById('moving-bike');
+  const itemsSummary = document.getElementById('track-items-summary');
+  const totalAmt = document.getElementById('track-total-amt');
+
+  // Fill Details
+  idEl.textContent = 'ORDER ' + lastOrder.id;
+  totalAmt.textContent = '₹' + lastOrder.total;
+  itemsSummary.innerHTML = lastOrder.items.map(i => `
+    <div class="flex justify-between items-center text-[11px]">
+      <span class="text-stone-500 font-bold">${i.qty}x <span class="text-stone-800">${i.name}</span></span>
+      <span class="font-black text-stone-900">₹${i.price * i.qty}</span>
+    </div>
+  `).join('');
+
+  // Show FAB if there's a recent order (less than 2 hours old)
+  const orderTime = new Date(lastOrder.timestamp).getTime();
+  const now = new Date().getTime();
+  const isRecent = (now - orderTime) < (2 * 60 * 60 * 1000); // 2 hours
+
+  if (isRecent && lastOrder.status !== 'Delivered') {
+    trackFab.classList.remove('hidden');
+    trackFab.classList.add('flex');
+    if (lastOrder.status === 'Out for Delivery') trackIconFab.classList.add('animate-pulse');
+  } else {
+    trackFab.classList.add('hidden');
+    trackFab.classList.remove('flex');
+  }
+
+  // If order is delivered, show success then hide tracker after 5s
+  if (lastOrder.status === 'Delivered') {
+    title.textContent = 'Order Delivered! Enjoy 🍛';
+    icon.textContent = 'sentiment_very_satisfied';
+    animBox.classList.add('hidden'); // Hide animation on delivery
+    document.getElementById('step-1').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+    document.getElementById('step-2').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+    document.getElementById('step-3').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+    document.getElementById('step-2').innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+    document.getElementById('step-3').innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+    setTimeout(() => {
+      tracker.classList.add('translate-y-full');
+      trackFab.classList.add('hidden');
+    }, 5000);
+    return;
+  }
+
+  if (lastOrder.status === 'Pending') {
+    title.textContent = 'Order Placed';
+    icon.textContent = 'schedule';
+    animBox.classList.add('hidden');
+  } else if (lastOrder.status === 'Preparing') {
+    title.textContent = 'Kitchen is Preparing';
+    icon.textContent = 'soup_kitchen';
+    animBox.classList.add('hidden');
+    document.getElementById('step-2').className = 'w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xs';
+    document.getElementById('step-2-text').className = 'text-xs font-bold text-stone-800 leading-none';
+    document.getElementById('step-1').innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+    document.getElementById('step-1').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+  } else if (lastOrder.status === 'Out for Delivery') {
+    title.textContent = 'Rider is Delivering';
+    icon.textContent = 'delivery_dining';
+    animBox.classList.remove('hidden');
+    bike.style.left = '75%'; // Sim movement
+    document.getElementById('step-2').innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+    document.getElementById('step-2').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+    document.getElementById('step-1').innerHTML = '<span class="material-symbols-outlined text-sm">check</span>';
+    document.getElementById('step-1').className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center';
+    document.getElementById('step-3').className = 'w-8 h-8 rounded-full bg-orange-600 text-white flex items-center justify-center font-bold text-xs';
+    document.getElementById('step-3-text').className = 'text-xs font-bold text-stone-800 leading-none';
+  }
+}
+
+// Check for updates every 3 seconds
+setInterval(updateLiveTracking, 3000);
+
+window.onload = () => {
+  buildCatPills();
+  renderMenu();
+  updateCartBadges();
+  updateLiveTracking();
+};
+</script>
+</body>
+</html>

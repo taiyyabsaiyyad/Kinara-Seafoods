@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Kinara Sea Food | Digital App</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#e23744">
+    <link rel="apple-touch-icon" href="Main APP logo.png">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#E23744",
+                        "primary-dark": "#b7122a",
+                        "surface": "#f8f9fa"
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #E23744;
+            --accent: #2C3E50;
+            --sea-mist: #F0F4F8;
+            --sand: #FDFBF7;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: url('bg.png') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            padding-bottom: 90px;
+            overscroll-behavior: none;
+        }
+
+        /* Subtle sand overlay to keep content readable */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(253, 251, 247, 0.4);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Glassmorphic Cards */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Modal Transitions */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            display: none;
+            align-items: flex-end;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-content {
+            background: white;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 32px 32px 0 0;
+            padding: 24px;
+            transform: translateY(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+
+        .active-cat {
+            background: var(--primary) !important;
+            color: white !important;
+            transform: scale(1.05);
+            box-shadow: 0 10px 20px -5px rgba(226, 55, 68, 0.3);
+        }
+
+        /* Veg Indicators */
+        .veg-indicator { width: 12px; height: 12px; border: 1.5px solid; display: flex; align-items: center; justify-content: center; border-radius: 2px; }
+        .veg-indicator.veg { border-color: #10b981; }
+        .veg-indicator.non-veg { border-color: #ef4444; }
+        .veg-indicator.veg div { width: 6px; height: 6px; background: #10b981; border-radius: 50%; }
+        .veg-indicator.non-veg div { width: 6px; height: 6px; background: #ef4444; border-radius: 50%; }
+
+        /* Status Animations */
+        .wave-bg {
+            background: radial-gradient(circle at 50% 120%, var(--primary) 0%, transparent 60%);
+            background-size: 200% 200%;
+            animation: waveFlow 10s infinite linear;
+        }
+        @keyframes waveFlow {
+            0% { background-position: 0% 0%; }
+            100% { background-position: 100% 100%; }
+        }
+
+        @keyframes pop {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .cart-pop { animation: pop 0.3s ease-out; }
+    </style>
+</head>
+<body class="text-stone-800">
+
+<!-- Header Section -->
+<header class="fixed top-0 left-0 right-0 glass-card z-30 transition-all border-b border-white/20">
+    <div class="px-4 py-3 flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-white rounded-2xl shadow-sm border border-stone-100 overflow-hidden flex items-center justify-center p-1.5">
+                <img src="Logo.png" class="w-full h-full object-contain" alt="Logo">
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-base font-black text-stone-900 uppercase tracking-wide leading-tight">Kinara Seafood</h1>
+                <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.15em] mt-0.5">Premium Seafood Dining</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="window.location.href='tel:917045528239'" class="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center border border-stone-200/50 text-stone-600 active:scale-95 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[20px]">call</span>
+            </button>
+            <button onclick="openProfile()" class="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center border border-stone-200/50 text-stone-600 active:scale-95 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[20px]">person</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 px-4 max-w-7xl mx-auto space-y-6">
+
+    <!-- Hero Section -->
+    <section id="hero-section" class="relative w-full aspect-[4/5] md:aspect-[21/9] rounded-2xl overflow-hidden shadow-lg transition-all duration-500">
+        <picture>
+            <source media="(max-width: 768px)" srcset="Hero-Mob.png">
+            <img src="Hero (2).png" class="w-full h-full object-cover" alt="Hero Banner">
+        </picture>
+    </section>
+
+    <!-- Search Bar -->
+    <div class="relative w-full">
+        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-stone-400 text-lg">search</span>
+        <input id="search-input" type="search" placeholder="Search delicious seafood..." oninput="filterMenu()" class="w-full bg-white border border-stone-100 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none shadow-sm">
+    </div>
+
+    <!-- Veg Only Toggle -->
+    <div class="flex justify-end items-center gap-3 px-1">
+        <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pure Veg Only</span>
+        <button id="veg-toggle" onclick="toggleVegOnly()" class="w-12 h-6 bg-stone-200 rounded-full relative transition-all duration-300">
+            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 transform" id="veg-toggle-circle"></div>
+        </button>
+    </div>
+
+    <!-- Categories -->
+    <section id="cat-section" class="sticky top-20 z-20 py-2 mb-4 -mx-4 px-4">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1" id="cat-row">
+            <!-- Dynamic Categories -->
+        </div>
+    </section>
+
+    <!-- Menu Grid -->
+    <section>
+        <div id="search-banner" class="hidden mb-4 p-3 bg-red-50/80 backdrop-blur rounded-xl border border-red-100 flex justify-between items-center">
+            <span id="search-banner-text" class="text-xs font-bold text-primary"></span>
+            <button onclick="clearSearch()" class="text-xs font-bold text-stone-500">✕ Clear</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-12" id="menu-grid">
+            <!-- Dynamic Menu Items -->
+        </div>
+    </section>
+
+    <!-- Customer Reviews -->
+    <section class="space-y-4 pt-4">
+        <div class="flex justify-between items-start px-1">
+            <h3 class="text-sm font-black uppercase tracking-widest text-stone-900 mt-2">Customer Reviews</h3>
+            <div class="flex flex-col items-end gap-2">
+                <div class="flex gap-1" id="star-rating">
+                    <span class="material-symbols-outlined text-stone-300 text-lg cursor-pointer transition-colors" onclick="setRating(1)">star</span>
+                    <span class="material-symbols-outlined text-stone-300 text-lg cursor-pointer transition-colors" onclick="setRating(2)">star</span>
+                    <span class="material-symbols-outlined text-stone-300 text-lg cursor-pointer transition-colors" onclick="setRating(3)">star</span>
+                    <span class="material-symbols-outlined text-stone-300 text-lg cursor-pointer transition-colors" onclick="setRating(4)">star</span>
+                    <span class="material-symbols-outlined text-stone-300 text-lg cursor-pointer transition-colors" onclick="setRating(5)">star</span>
+                </div>
+                <div class="relative w-40 md:w-64">
+                    <input id="review-input" type="text" placeholder="(share your experience)" class="w-full bg-white border border-stone-100 rounded-full py-2 pl-4 pr-16 text-[10px] font-bold text-stone-800 placeholder:text-stone-300 focus:ring-2 focus:ring-primary/10 transition-all outline-none shadow-sm">
+                    <button onclick="submitReview()" class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary text-white text-[9px] font-black px-3 py-1.5 rounded-full uppercase active:scale-95 transition-all shadow-sm">Submit</button>
+                </div>
+            </div>
+        </div>
+        <div class="flex gap-4 overflow-x-auto no-scrollbar pb-2 -mx-4 px-4" id="reviews-container">
+            <div class="min-w-[280px] glass-card p-5 rounded-2xl space-y-3">
+                <div class="flex text-yellow-400 gap-0.5">
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star_half</span>
+                </div>
+                <p class="text-xs italic text-stone-600 leading-relaxed">"Best seafood in Nerul! The Crab Lollipop is a must try. Authentically Malvani and super fresh."</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-stone-400">— Rahul Sharma</p>
+            </div>
+            <div class="min-w-[280px] glass-card p-5 rounded-2xl space-y-3">
+                <div class="flex text-yellow-400 gap-0.5">
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                </div>
+                <p class="text-xs italic text-stone-600 leading-relaxed">"The Surmai Thali was exceptional. Reminds me of coastal home cooking. Highly recommended!"</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-stone-400">— Anita Deshmukh</p>
+            </div>
+            <div class="min-w-[280px] glass-card p-5 rounded-2xl space-y-3">
+                <div class="flex text-yellow-400 gap-0.5">
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star</span>
+                    <span class="material-symbols-outlined text-[18px] fill-current">star_outline</span>
+                </div>
+                <p class="text-xs italic text-stone-600 leading-relaxed">"Ordered through the app, delivery was prompt and food was piping hot. Great service!"</p>
+                <p class="text-[10px] font-black uppercase tracking-widest text-stone-400">— Vikram Singh</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hotel Information -->
+    <section class="space-y-4 pt-4 pb-20">
+        <h3 class="text-sm font-black uppercase tracking-widest text-stone-900 px-1">Hotel Information</h3>
+        <div class="space-y-3">
+            <div class="glass-card p-4 rounded-2xl flex items-center gap-4 group active:scale-[0.98] transition-all cursor-pointer" onclick="window.location.href='tel:917045528239'">
+                <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[20px]">call</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Call Us</p>
+                    <p class="text-sm font-extrabold text-stone-900">+91 70455 28239</p>
+                </div>
+                <span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">chevron_right</span>
+            </div>
+            <div class="glass-card p-4 rounded-2xl flex items-center gap-4 group active:scale-[0.98] transition-all cursor-pointer">
+                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[20px]">location_on</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Visit Us</p>
+                    <p class="text-sm font-extrabold text-stone-900">Nerul, Navi Mumbai</p>
+                </div>
+                <span class="material-symbols-outlined text-stone-300 group-hover:text-primary transition-colors">chevron_right</span>
+            </div>
+            <div class="glass-card p-4 rounded-2xl flex items-center gap-4">
+                <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[20px]">schedule</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Timings</p>
+                    <p class="text-sm font-extrabold text-stone-900">11:00 AM - 11:30 PM</p>
+                </div>
+                <div class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter">Open Now</div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Bottom Nav -->
+<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-100 px-8 py-3 flex justify-around items-center z-40">
+    <button onclick="scrollToTop()" class="flex flex-col items-center gap-1 text-primary">
+        <span class="material-symbols-outlined text-[24px] fill-current">home</span>
+        <span class="text-[10px] font-black uppercase tracking-widest">Home</span>
+    </button>
+    <button onclick="openCart()" class="relative flex flex-col items-center gap-1 text-stone-400">
+        <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+        <span class="text-[10px] font-black uppercase tracking-widest">Cart</span>
+        <div id="cart-badge" class="hidden absolute -top-1 -right-2 bg-primary text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-black border-2 border-white">0</div>
+    </button>
+    <button onclick="openOrders()" class="flex flex-col items-center gap-1 text-stone-400">
+        <span class="material-symbols-outlined text-[24px]">receipt_long</span>
+        <span class="text-[10px] font-black uppercase tracking-widest">Orders</span>
+    </button>
+</nav>
+
+<!-- MODALS -->
+
+<!-- Status Modal -->
+<div id="status-modal" class="modal-overlay" onclick="if(event.target===this) closeStatus()">
+    <div class="modal-content !bg-stone-950 !p-0 !max-height-full !h-full flex flex-col overflow-hidden">
+        <div class="relative flex-1 flex flex-col items-center justify-center overflow-hidden">
+            <div class="wave-bg absolute inset-0 opacity-20"></div>
+            <div class="relative z-10 flex flex-col items-center gap-8">
+                <div class="w-40 h-40 bg-white rounded-full p-6 shadow-[0_0_50px_rgba(255,255,255,0.3)] animate-pulse relative flex items-center justify-center">
+                    <img src="Main APP logo.png" class="w-full h-full object-contain" alt="Kinara Logo">
+                    <div class="absolute inset-0 rounded-full border-4 border-white/50 animate-ping"></div>
+                </div>
+                <div class="text-center">
+                    <h2 class="text-3xl font-black text-white tracking-tight">Preparing Your Feast</h2>
+                    <p class="text-sm font-bold text-primary uppercase tracking-[0.3em] mt-3 animate-pulse">In the Malvani Kitchen</p>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white rounded-t-[32px] p-6 space-y-6 shadow-[0_-10px_40px_rgba(0,0,0,0.2)]">
+            <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto"></div>
+            <div class="flex justify-between items-center">
+                <h3 class="text-lg font-extrabold">Order Confirmed</h3>
+                <div class="bg-green-50 text-green-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider">Confirmed</div>
+            </div>
+            <div id="status-items-list" class="space-y-3 max-h-40 overflow-y-auto pr-2 no-scrollbar"></div>
+            <div class="border-t border-stone-50 pt-4 flex justify-between items-center">
+                <div>
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Total Bill</p>
+                    <p id="status-total-amt" class="text-xl font-black text-stone-900">₹0</p>
+                </div>
+                <button onclick="closeStatus()" class="bg-stone-900 text-white px-8 py-3.5 rounded-2xl font-extrabold text-xs active:scale-95 transition-all">Back to Home</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cart Modal -->
+<div id="cart-modal" class="modal-overlay" onclick="if(event.target===this) closeCart()">
+    <div class="modal-content">
+        <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black text-stone-900">Your Cart</h2>
+            <button onclick="closeCart()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div id="cart-items-list" class="space-y-4 mb-8"></div>
+        <div id="cart-footer" class="space-y-4 border-t border-stone-100 pt-6">
+            <div class="flex justify-between items-center px-1">
+                <span class="text-stone-400 font-bold uppercase text-[10px] tracking-widest">Grand Total</span>
+                <span id="cart-total-amt" class="text-2xl font-black text-stone-950 text-primary">₹0</span>
+            </div>
+            <div class="flex gap-2">
+                <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex-1 py-3 rounded-xl border-2 border-primary bg-red-50 text-primary font-bold text-xs">COD</button>
+                <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="flex-1 py-3 rounded-xl border-2 border-stone-100 text-stone-500 font-bold text-xs">Pay Online</button>
+            </div>
+            <div id="payment-section" class="hidden flex flex-col gap-4 bg-stone-50 p-6 rounded-2xl border border-stone-100">
+                <div class="flex flex-col items-center gap-3">
+                    <div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Step 1: Scan & Pay</div>
+                    <img id="upi-qr" src="" class="w-44 h-44 rounded-2xl shadow-md border-4 border-white" alt="UPI QR">
+                    <p class="text-[10px] font-bold text-stone-500 text-center leading-relaxed px-4">Step 2: Take a <span class="text-primary font-black">Screenshot</span> of your payment receipt</p>
+                </div>
+                
+                <div class="space-y-3 pt-4 border-t border-stone-200">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center">Step 3: Share Details</p>
+                    <button id="whatsapp-share-btn" onclick="shareOnWhatsApp()" class="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-black text-xs flex justify-center items-center gap-2 shadow-lg shadow-green-500/20 active:scale-95 transition-all">
+                        <span class="material-symbols-outlined text-[18px]">chat</span> Share Order & SS
+                    </button>
+                    
+                    <div class="flex flex-col gap-2 pt-2">
+                        <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center">Step 4: Confirm Sharing</p>
+                        <button id="ss-toggle-btn" onclick="toggleSSShared()" class="w-full bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] transition-all shadow-md active:scale-95">
+                            Screenshot Shared?
+                        </button>
+                    </div>
+                </div>
+
+                <button id="final-confirm-btn" onclick="confirmOnlineOrder()" class="hidden w-full bg-stone-900 text-white py-4 rounded-xl font-black text-xs mt-2 shadow-xl active:scale-95 transition-all">
+                    Finalize Order & Show Paid
+                </button>
+            </div>
+            <button id="place-order-btn" onclick="placeOrder()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-[15px] flex justify-center items-center gap-2 shadow-xl shadow-green-600/10">
+                <span class="material-symbols-outlined text-[20px]">chat</span> Place Order on WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Modal -->
+<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this) closeProfile()">
+    <div class="modal-content">
+        <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black text-stone-900">Your Profile</h2>
+            <button onclick="closeProfile()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div class="space-y-4">
+            <input id="prof-name" type="text" placeholder="Your Name" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
+            <input id="prof-email" type="email" placeholder="Email Address" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
+            <input id="prof-phone" type="tel" placeholder="Contact Number" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
+            <textarea id="prof-addr" rows="3" placeholder="Delivery Address" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary resize-none"></textarea>
+            <button onclick="saveProfile()" class="w-full bg-primary text-white py-4 rounded-xl font-black text-sm active:scale-95 transition-all">Save Details</button>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Modal -->
+<div id="orders-modal" class="modal-overlay" onclick="if(event.target===this) closeOrders()">
+    <div class="modal-content">
+        <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-black text-stone-900">Order History</h2>
+            <button onclick="closeOrders()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
+                <span class="material-symbols-outlined text-[20px]">close</span>
+            </button>
+        </div>
+        <div id="orders-history-list" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar"></div>
+    </div>
+</div>
+
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-6 py-3 rounded-full text-xs font-bold shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 translate-y-4"></div>
+
+<script src="data.js"></script>
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js');
+        }
+    </script>
+</body>
+</html>

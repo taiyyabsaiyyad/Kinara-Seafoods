@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport"/>
+    <title>Kinara Sea Food | Digital App</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#E23744",
+                        "primary-dark": "#b7122a",
+                        "surface": "#f8f9fa"
+                    },
+                    fontFamily: {
+                        sans: ["Plus Jakarta Sans", "sans-serif"]
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        :root {
+            --primary: #E23744;
+            --accent: #2C3E50;
+            --sea-mist: #F0F4F8;
+            --sand: #FDFBF7;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background: #fdfbf7;
+            min-height: 100vh;
+            overscroll-behavior: none;
+            padding-bottom: 90px;
+        }
+
+        .bg-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: url('bg.png') no-repeat center center fixed;
+            background-size: cover;
+            filter: brightness(0.9);
+            z-index: -2;
+        }
+
+        .bg-tint {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(253, 251, 247, 0.7);
+            backdrop-filter: blur(8px);
+            z-index: -1;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+        }
+
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); z-index: 100; display: none; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.open { display: flex; opacity: 1; pointer-events: auto; }
+        .modal-content { 
+            background: #ffffff; 
+            width: 100%; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+            border-radius: 40px 40px 0 0; 
+            padding: 24px;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+        .modal-overlay.open .modal-content { transform: translateY(0); }
+        
+        .veg-indicator { width: 14px; height: 14px; border: 1px solid #ddd; padding: 2px; background: white; border-radius: 2px; }
+        .veg-indicator.veg div { background: #2e7d32; }
+        .veg-indicator.non-veg div { background: #c62828; }
+        .veg-indicator div { width: 100%; height: 100%; border-radius: 50%; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .fade-in { animation: fadeIn 0.4s ease forwards; }
+
+        .category-btn.active { background: #E23744; color: white; border-color: #E23744; box-shadow: 0 4px 12px rgba(226, 55, 68, 0.3); }
+
+        #menu-grid { min-height: 500px; }
+        
+        .hero-box { 
+            width: 100%;
+            border-radius: 24px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            background: white;
+            border: 2px solid white;
+        }
+        .hero-img {
+            width: 100%;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            display: block;
+            transition: transform 0.5s ease;
+        }
+        .hero-box:hover .hero-img { transform: scale(1.02); }
+
+        /* Menu Card Animations */
+        .menu-card {
+            transition: all 0.4s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+        .menu-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            border-color: rgba(226, 55, 68, 0.2);
+        }
+        .menu-card:active {
+            transform: scale(0.96);
+        }
+        .menu-card .img-container img {
+            transition: transform 0.6s cubic-bezier(0.2, 1, 0.2, 1);
+        }
+        .menu-card:hover .img-container img {
+            transform: scale(1.15) rotate(2deg);
+        }
+        }
+
+        /* Refined Border Review Cards */
+        .review-card {
+            min-width: 300px;
+            padding: 28px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            position: relative;
+            background: #ffffff;
+            border: 1px solid rgba(0,0,0,0.05);
+            /* Removed experimental background-clip to fix vertical clipping */
+            overflow: visible !important;
+        }
+        .review-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 20px 40px rgba(226, 55, 68, 0.1);
+        }
+
+        /* Footer Details */
+        .footer-link {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 16px;
+            background: white;
+            border-radius: 20px;
+            border: 1px solid #f0f0f0;
+            transition: all 0.2s ease;
+        }
+        .footer-link:active { background: #fafafa; transform: scale(0.98); }
+    </style>
+</head>
+<body class="text-stone-800">
+
+<div class="bg-overlay"></div>
+<div class="bg-tint"></div>
+
+<header class="fixed top-0 left-0 right-0 bg-white/95 backdrop-blur-md z-30 border-b border-stone-100/80 shadow-sm">
+    <div class="px-4 py-3 flex justify-between items-center max-w-7xl mx-auto">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 bg-white rounded-xl shadow-md p-1 border border-stone-100 flex items-center justify-center overflow-hidden">
+                <img src="Main APP logo.png" class="max-w-full max-h-full object-contain" alt="Logo" onerror="this.src='logo.png'">
+            </div>
+            <div class="flex flex-col">
+                <h1 class="text-lg font-[900] text-stone-950 tracking-tighter leading-none">KINARA SEAFOOD</h1>
+                <span class="text-[9px] text-primary font-black uppercase mt-0.5 tracking-widest">Malvani Special</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <button onclick="openOrders()" class="w-11 h-11 bg-white rounded-2xl flex items-center justify-center border border-stone-200 text-stone-600 active:scale-90 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[24px]">history</span>
+            </button>
+            <button onclick="openProfile()" class="w-11 h-11 bg-white rounded-2xl flex items-center justify-center border border-stone-200 text-stone-600 active:scale-90 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[24px]">person</span>
+            </button>
+        </div>
+    </div>
+</header>
+
+<main class="pt-24 px-4 max-w-7xl mx-auto space-y-6">
+    <!-- Hero Section -->
+    <section class="relative w-full aspect-[16/9] rounded-[28px] overflow-hidden shadow-2xl shadow-primary/10">
+        <img src="Hero (2).png" class="w-full h-full object-cover" alt="Hero">
+    </section>
+
+
+    <!-- Smart Search Bar -->
+    <div class="space-y-4">
+        <div class="relative group">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <span class="material-symbols-outlined text-stone-400 group-focus-within:text-primary transition-colors">search</span>
+            </div>
+            <input id="search-input" type="text" 
+                placeholder="Find prawns, thali or starters..." 
+                oninput="handleSearch(this.value)"
+                onfocus="showSuggestions()"
+                class="w-full bg-white border-2 border-stone-100 rounded-[24px] py-4 pl-12 pr-12 text-sm focus:border-primary/20 focus:ring-4 focus:ring-primary/5 transition-all outline-none shadow-sm font-bold placeholder:text-stone-300">
+            <div class="absolute inset-y-0 right-0 pr-4 flex items-center">
+                <button onclick="startVoiceSearch()" class="w-8 h-8 flex items-center justify-center text-stone-400 hover:text-primary transition-colors">
+                    <span class="material-symbols-outlined">mic</span>
+                </button>
+            </div>
+            
+            <!-- Suggestions Dropdown -->
+            <div id="search-suggestions" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-[24px] shadow-2xl border border-stone-100 z-50 overflow-hidden fade-in">
+                <div class="p-2" id="suggestions-list"></div>
+            </div>
+        </div>
+
+        <!-- Trending Tags -->
+        <div class="flex gap-2 overflow-x-auto no-scrollbar py-1">
+            <span class="text-[9px] font-black text-stone-300 uppercase tracking-widest self-center mr-1 shrink-0">Popular:</span>
+            <button onclick="quickSearch('Thali')" class="px-4 py-2 bg-white border border-stone-100 rounded-full text-[10px] font-bold text-stone-600 shadow-sm active:scale-95 whitespace-nowrap">🍱 Thali</button>
+            <button onclick="quickSearch('Prawns')" class="px-4 py-2 bg-white border border-stone-100 rounded-full text-[10px] font-bold text-stone-600 shadow-sm active:scale-95 whitespace-nowrap">🍤 Prawns</button>
+            <button onclick="quickSearch('Surmai')" class="px-4 py-2 bg-white border border-stone-100 rounded-full text-[10px] font-bold text-stone-600 shadow-sm active:scale-95 whitespace-nowrap">🐟 Surmai</button>
+            <button onclick="quickSearch('Veg')" class="px-4 py-2 bg-white border border-stone-100 rounded-full text-[10px] font-bold text-stone-600 shadow-sm active:scale-95 whitespace-nowrap">🥗 Veg</button>
+        </div>
+    </div>
+
+    <!-- Categories -->
+    <section id="cat-section" class="sticky top-20 z-20 py-2 -mx-4 px-4 overflow-hidden">
+        <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2" id="cat-row"></div>
+    </section>
+
+    <!-- Menu Grid -->
+    <section>
+        <div id="search-banner" class="hidden mb-6 p-4 bg-primary/5 rounded-2xl border border-primary/10 flex justify-between items-center">
+            <p class="text-sm font-bold text-primary" id="search-banner-text"></p>
+            <button onclick="clearSearch()" class="text-xs font-black uppercase text-stone-400">Clear</button>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" id="menu-grid"></div>
+    </section>
+
+    <!-- Hotel Details Section -->
+    <section class="space-y-4 pt-8">
+        <h3 class="text-sm font-black text-stone-900 uppercase tracking-widest px-2">Hotel Information</h3>
+        <div class="grid grid-cols-1 gap-3">
+            <div class="space-y-2">
+                <a href="tel:917045528239" class="footer-link">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">call</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Call Us (Primary)</p>
+                        <p class="text-sm font-bold text-stone-900">+91 70455 28239</p>
+                    </div>
+                    <span class="material-symbols-outlined text-stone-300">chevron_right</span>
+                </a>
+                <a href="tel:919326367690" class="footer-link">
+                    <div class="w-10 h-10 bg-blue-50 text-blue-600 rounded-xl flex items-center justify-center">
+                        <span class="material-symbols-outlined">call</span>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Call Us (Secondary)</p>
+                        <p class="text-sm font-bold text-stone-900">+91 93263 67690</p>
+                    </div>
+                    <span class="material-symbols-outlined text-stone-300">chevron_right</span>
+                </a>
+            </div>
+            <a href="https://maps.google.com/?q=Kinara+Seafood+Nerul+Navi+Mumbai" target="_blank" class="footer-link">
+                <div class="w-10 h-10 bg-green-50 text-green-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined">location_on</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Visit Us</p>
+                    <p class="text-sm font-bold text-stone-900">Nerul, Navi Mumbai</p>
+                </div>
+                <span class="material-symbols-outlined text-stone-300">chevron_right</span>
+            </a>
+            <div class="footer-link">
+                <div class="w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center">
+                    <span class="material-symbols-outlined">schedule</span>
+                </div>
+                <div class="flex-1">
+                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Timings</p>
+                    <p class="text-sm font-bold text-stone-900">11:00 AM - 11:30 PM</p>
+                </div>
+                <div class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-[9px] font-black uppercase">Open Now</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Review Section (Slider) -->
+    <section class="space-y-4 pb-32">
+        <div class="flex justify-between items-center px-2">
+            <div class="flex items-center gap-2">
+                <span class="w-1.5 h-6 bg-primary rounded-full"></span>
+                <h3 class="text-sm font-black text-stone-900 uppercase tracking-widest">Customer Reviews</h3>
+            </div>
+            <a href="https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do" target="_blank" class="px-3 py-1.5 bg-primary/5 text-primary rounded-full text-[10px] font-black flex items-center gap-1.5 hover:bg-primary hover:text-white transition-all">
+                WRITE A REVIEW <span class="material-symbols-outlined text-[14px]">edit</span>
+            </a>
+        </div>
+        <div class="flex gap-6 overflow-x-auto no-scrollbar pb-20 pt-10 -mx-4 px-6" id="review-slider">
+            <!-- Review Card 1 -->
+            <div class="menu-card review-card rounded-[28px] fade-in">
+                <div class="flex justify-between items-start">
+                    <div class="flex gap-0.5 text-yellow-400">
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                    </div>
+                    <span class="material-symbols-outlined text-[18px] text-stone-200">format_quote</span>
+                </div>
+                <p class="text-[13px] text-stone-600 leading-relaxed font-medium italic">"Best seafood in Nerul! The Crab Lollipop is a must try. Authentically Malvani and super fresh."</p>
+                <div class="mt-2 flex items-center gap-3 pt-4 border-t border-stone-100">
+                    <div class="w-10 h-10 bg-primary/5 text-primary rounded-2xl flex items-center justify-center font-black text-[14px] border border-primary/10">RS</div>
+                    <div>
+                        <p class="text-[11px] font-black text-stone-900 tracking-wide">RAHUL SHARMA</p>
+                        <div class="flex items-center gap-1">
+                            <span class="w-1 h-1 bg-green-500 rounded-full animate-pulse"></span>
+                            <p class="text-[9px] font-bold text-stone-400 uppercase tracking-tighter">Verified Diner</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Review Card 2 -->
+            <div class="menu-card review-card rounded-[28px] fade-in">
+                <div class="flex justify-between items-start">
+                    <div class="flex gap-0.5 text-yellow-400">
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                    </div>
+                    <span class="material-symbols-outlined text-[18px] text-stone-200">format_quote</span>
+                </div>
+                <p class="text-[13px] text-stone-600 leading-relaxed font-medium italic">"The Surmai Thali was exceptional. Reminds me of coastal home cooking. Highly recommended!"</p>
+                <div class="mt-2 flex items-center gap-3 pt-4 border-t border-stone-100">
+                    <div class="w-10 h-10 bg-primary/5 text-primary rounded-2xl flex items-center justify-center font-black text-[14px] border border-primary/10">AD</div>
+                    <div>
+                        <p class="text-[11px] font-black text-stone-900 tracking-wide">ANITA DESHMUKH</p>
+                        <div class="flex items-center gap-1">
+                            <span class="w-1 h-1 bg-blue-500 rounded-full"></span>
+                            <p class="text-[9px] font-bold text-stone-400 uppercase tracking-tighter">Local Guide</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Review Card 3 -->
+            <div class="menu-card review-card rounded-[28px] fade-in">
+                <div class="flex justify-between items-start">
+                    <div class="flex gap-0.5 text-yellow-400">
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                        <span class="material-symbols-outlined text-[12px] fill-current">star</span>
+                    </div>
+                    <span class="material-symbols-outlined text-[18px] text-stone-200">format_quote</span>
+                </div>
+                <p class="text-[13px] text-stone-600 leading-relaxed font-medium italic">"Ordered through the app, delivery was prompt and food was piping hot. Great service!"</p>
+                <div class="mt-2 flex items-center gap-3 pt-4 border-t border-stone-100">
+                    <div class="w-10 h-10 bg-primary/5 text-primary rounded-2xl flex items-center justify-center font-black text-[14px] border border-primary/10">VS</div>
+                    <div>
+                        <p class="text-[11px] font-black text-stone-900 tracking-wide">VIKRAM SINGH</p>
+                        <div class="flex items-center gap-1">
+                            <span class="w-1.5 h-1.5 bg-primary rounded-full"></span>
+                            <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest">APP USER</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+</main>
+
+<!-- Cart Bar -->
+<div id="cart-bar" class="hidden fixed bottom-6 left-4 right-4 h-16 bg-stone-950 text-white rounded-[24px] flex items-center justify-between px-6 shadow-2xl z-40 active:scale-95 transition-all cursor-pointer" onclick="openCart()">
+    <div class="flex items-center gap-4">
+        <div class="w-10 h-10 bg-primary rounded-xl flex items-center justify-center shadow-lg">
+            <span class="material-symbols-outlined text-xl">shopping_bag</span>
+        </div>
+        <div class="flex flex-col">
+            <span id="bar-cart-count" class="text-[9px] font-black uppercase tracking-widest text-stone-500">0 ITEMS</span>
+            <span id="bar-cart-total" class="text-base font-black">₹0</span>
+        </div>
+    </div>
+    <div class="flex items-center gap-2">
+        <span class="text-xs font-black uppercase tracking-widest">Checkout</span>
+        <span class="material-symbols-outlined">chevron_right</span>
+    </div>
+</div>
+
+<!-- Modals -->
+<div id="cart-modal" class="modal-overlay" onclick="if(event.target===this) closeCart()">
+    <div class="modal-content">
+        <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-8"></div>
+        <div class="flex justify-between items-center mb-8">
+            <h2 class="text-2xl font-black text-stone-900">Your Order</h2>
+            <button onclick="closeCart()" class="text-stone-400 bg-stone-100 rounded-full w-10 h-10 flex items-center justify-center"><span class="material-symbols-outlined">close</span></button>
+        </div>
+        <div id="cart-items-list" class="space-y-4 mb-8"></div>
+        <div id="cart-footer" class="hidden space-y-6 pt-6 border-t border-stone-50">
+            <div class="flex justify-between items-center"><span class="text-sm font-bold text-stone-400 uppercase tracking-widest">Subtotal</span><span id="cart-total-amt" class="text-2xl font-black text-primary">₹0</span></div>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="py-4 rounded-2xl border-2 border-primary bg-primary/5 text-primary font-bold text-xs flex items-center justify-center gap-2">COD</button>
+                <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="py-4 rounded-2xl border-2 border-stone-100 text-stone-400 font-bold text-xs flex items-center justify-center gap-2">Online</button>
+            </div>
+            <div id="payment-section" class="hidden flex flex-col items-center gap-6 bg-stone-50 p-8 rounded-3xl border border-stone-100">
+                <img id="upi-qr" src="" class="w-48 h-48 rounded-2xl bg-white p-4 shadow-sm" alt="QR">
+                <p class="text-xs font-bold text-stone-500">Scan & Pay via UPI</p>
+                <button onclick="placeOrder()" class="w-full bg-primary text-white py-4 rounded-2xl font-black">Confirm Payment</button>
+            </div>
+            <button id="place-order-btn" onclick="placeOrder()" class="w-full bg-[#25D366] text-white py-5 rounded-2xl font-black text-sm flex justify-center items-center gap-3">
+                <span class="material-symbols-outlined">chat</span> Place Order on WhatsApp
+            </button>
+        </div>
+    </div>
+</div>
+
+<div id="status-modal" class="modal-overlay" onclick="if(event.target===this) closeStatus()">
+    <div class="modal-content !p-0 !max-height-full !h-full flex flex-col bg-stone-950 text-white">
+        <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+            <div class="w-40 h-40 bg-white rounded-full p-4 mb-8 relative flex items-center justify-center shadow-2xl">
+                <img src="Main APP logo.png" class="w-3/4 h-3/4 object-contain" alt="Kinara" onerror="this.src='logo.png'">
+            </div>
+            <h2 class="text-3xl font-black mb-2">Order Confirmed!</h2>
+            <p class="text-primary font-bold uppercase tracking-widest text-xs">Preparing your Malvani feast</p>
+        </div>
+        <div class="bg-white text-stone-900 rounded-t-[40px] p-8 space-y-6">
+            <div class="flex justify-between items-center">
+                <div><p class="text-[10px] font-black text-stone-400 uppercase mb-1">Order ID</p><p class="text-xl font-black" id="status-order-id"></p></div>
+                <div class="bg-green-50 text-green-600 px-4 py-2 rounded-full text-[10px] font-black uppercase">Live</div>
+            </div>
+            <div id="status-items-list" class="space-y-3 max-h-[30vh] overflow-y-auto pr-2 no-scrollbar"></div>
+            <div class="flex justify-between items-center pt-6 border-t border-stone-50">
+                <p class="text-xl font-black" id="status-total-amt">₹0</p>
+                <button onclick="closeStatus()" class="bg-stone-950 text-white px-8 py-4 rounded-2xl font-black text-xs">Back Home</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this) closeProfile()">
+    <div class="modal-content">
+        <h2 class="text-2xl font-black text-stone-900 mb-8">Your Profile</h2>
+        <div class="space-y-4">
+            <input id="prof-name" type="text" placeholder="Full Name" class="w-full bg-stone-50 border-stone-200 rounded-2xl p-4 text-sm font-bold">
+            <input id="prof-phone" type="tel" placeholder="Mobile Number" class="w-full bg-stone-50 border-stone-200 rounded-2xl p-4 text-sm font-bold">
+            <textarea id="prof-addr" rows="3" placeholder="Delivery Address" class="w-full bg-stone-50 border-stone-200 rounded-2xl p-4 text-sm font-bold resize-none"></textarea>
+            <button onclick="saveProfile()" class="w-full bg-primary text-white py-5 rounded-2xl font-black shadow-xl shadow-primary/20 mt-4">Save Details</button>
+        </div>
+    </div>
+</div>
+
+<div id="orders-modal" class="modal-overlay" onclick="if(event.target===this) closeOrders()">
+    <div class="modal-content"><h2 class="text-2xl font-black text-stone-900 mb-8">Past Orders</h2><div id="orders-history-list" class="space-y-4"></div></div>
+</div>
+
+<div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-6 py-3 rounded-full text-[11px] font-black uppercase tracking-widest shadow-2xl transition-all duration-300 opacity-0 pointer-events-none z-50 translate-y-4"></div>
+
+<script>
+const CAT_FALLBACKS = {};
+
+const menuData = {
+  categories: [
+    {
+      name: "Starters",
+      items: [
+        { id: "s1", name: "Crab Lollipop", price: 250, image: "menu/images/Crab Lollipop.jpg", isVeg: false, rating: 4.9 },
+        { id: "s2", name: "Butter Garlic Prawns", price: 260, image: "menu/images/Butter Garlic Prawns.jfif", isVeg: false, rating: 4.8 },
+        { id: "s3", name: "Butter Garlic Chicken", price: 260, image: "menu/images/Butter Garlic Chicken.jpg", isVeg: false, rating: 4.7 },
+        { id: "s4", name: "Fish Cutlets", price: 190, image: "menu/images/Fish Cutlets.webp", isVeg: false, rating: 4.6 },
+        { id: "s5", name: "Jawla Bhaji", price: 190, image: "menu/images/Javla Bhaji.jpg", isVeg: false, rating: 4.8 },
+        { id: "s6", name: "Chicken Tawa Masala", price: 270, image: "menu/images/Chicken Tawa Masala.jpg", isVeg: false, rating: 4.7 },
+        { id: "s7", name: "Chicken Kolivada", price: 260, image: "menu/images/Chicken Kolivada.jpg", isVeg: false, rating: 4.5 },
+        { id: "s8", name: "Prawns Kolivada", price: 360, image: "menu/images/Prawns Kolivada.jfif", isVeg: false, rating: 4.9 },
+        { id: "s9", name: "Paneer Kolivada (Veg)", price: 260, image: "menu/images/Paneer Kolivada (Veg).jfif", isVeg: true, rating: 4.6 },
+        { id: "s10", name: "Kothimbir Wadi (Veg)", price: 200, image: "menu/images/Kothimbir Wadi (Veg).jpg", isVeg: true, rating: 4.8 }
+      ]
+    },
+    {
+      name: "Main Course",
+      items: [
+        { id: "m1", name: "Prawns Malvani", price: 260, image: "menu/images/Prawns Malvani.jpg", isVeg: false, rating: 4.9 },
+        { id: "m2", name: "Chicken Malvani", price: 240, image: "menu/images/Chicken Malvani.jpg", isVeg: false, rating: 4.8 },
+        { id: "m3", name: "Chicken Sukka", price: 220, image: "menu/images/Chicken Sukka.jfif", isVeg: false, rating: 4.7 },
+        { id: "m4", name: "Prawns Sukka", price: 260, image: "menu/images/Prawns Sukka.jpg", isVeg: false, rating: 4.8 },
+        { id: "m5", name: "Kombadi Vade", price: 280, image: "menu/images/Kombadi Vade.jpg", isVeg: false, rating: 4.9 },
+        { id: "m6", name: "Bangda Curry", price: 260, image: "menu/images/Bangda Curry.jpg", isVeg: false, rating: 4.6 },
+        { id: "m7", name: "Surmai Curry", price: 350, image: "menu/images/Surmai Curry.png", isVeg: false, rating: 4.9 },
+        { id: "m8", name: "Pomfret Curry", price: 450, image: "menu/images/Pomfret Curry.jpg", isVeg: false, rating: 4.8 },
+        { id: "m10", name: "Chicken Handi", price: 440, image: "menu/images/Chicken Handi.avif", isVeg: false, rating: 4.7 },
+        { id: "m11", name: "Mutton Handi", price: 680, image: "menu/images/Mutton Handi.avif", isVeg: false, rating: 4.8 },
+        { id: "m12", name: "Paneer Malvani (Veg)", price: 220, image: "menu/images/Paneer Malvani (Veg).jpg", isVeg: true, rating: 4.7 },
+        { id: "m13", name: "Dal Tadka (Veg)", price: 150, image: "menu/images/Dal Tadka (Veg).webp", isVeg: true, rating: 4.6 }
+      ]
+    },
+    {
+      name: "Biryani",
+      items: [
+        { id: "b1", name: "Chicken Biryani", price: 360, image: "menu/images/Chicken Biryani.jpg", isVeg: false, rating: 4.9 },
+        { id: "b2", name: "Mutton Biryani", price: 440, image: "menu/images/Mutton Biryani.jpg", isVeg: false, rating: 4.8 },
+        { id: "b3", name: "Prawns Biryani", price: 380, image: "menu/images/Prawns Biryani.jpg", isVeg: false, rating: 4.9 },
+        { id: "b4", name: "Surmai Biryani", price: 450, image: "menu/images/Surmai Biryani.webp", isVeg: false, rating: 4.8 },
+        { id: "b5", name: "Paneer Biryani", price: 330, image: "menu/images/Paneer Biryani.jpg", isVeg: true, rating: 4.7 }
+      ]
+    },
+    {
+      name: "Sea Food Thali",
+      items: [
+        { id: "st1", name: "Surmai Thali", price: 350, image: "menu/images/Surmai Thali.avif", isVeg: false, rating: 5.0 },
+        { id: "st2", name: "Prawns Thali", price: 330, image: "menu/images/Prawns Thali.jfif", isVeg: false, rating: 4.8 },
+        { id: "st3", name: "Pomfret Thali", price: 450, image: "menu/images/Pomfret Thali.avif", isVeg: false, rating: 4.9 },
+        { id: "st4", name: "Bombil Thali", price: 280, image: "menu/images/Bombil Thali.jfif", isVeg: false, rating: 4.7 },
+        { id: "st5", name: "Bangda Thali", price: 260, image: "menu/images/Bangda Thali.jfif", isVeg: false, rating: 4.6 },
+        { id: "st10", name: "Jitada Chonak Thali", price: 350, image: "menu/images/Jitada_Chonak Thali.jfif", isVeg: false, rating: 4.9 }
+      ]
+    },
+    {
+      name: "Non-Veg Thali",
+      items: [
+        { id: "nvt1", name: "Chicken Thali", price: 270, image: "menu/images/Chicken Thali.jfif", isVeg: false, rating: 4.8 },
+        { id: "nvt2", name: "Anda Thali", price: 230, image: "menu/images/Anda Thali.jpg", isVeg: false, rating: 4.5 },
+        { id: "nvt3", name: "Mutton Thali", price: 480, image: "menu/images/Mutton Thali.avif", isVeg: false, rating: 4.9 }
+      ]
+    },
+    {
+      name: "Veg Thali",
+      items: [
+        { id: "vt1", name: "Veg Thali", price: 175, image: "menu/images/Veg Thali.avif", isVeg: true, rating: 4.4 },
+        { id: "vt2", name: "Kinara Special Thali", price: 225, image: "menu/images/Kinara Special Thali.jpg", isVeg: true, rating: 5.0 }
+      ]
+    },
+    {
+      name: "Beverages",
+      items: [
+        { id: "bv1", name: "Solkadhi", price: 40, image: "menu/images/Solkadhi.webp", isVeg: true, rating: 5.0 },
+        { id: "bv2", name: "Kokam Sarbat", price: 30, image: "menu/images/Kokam Sarbat.jpg", isVeg: true, rating: 4.8 },
+        { id: "bv3", name: "Kokam Mojito", price: 60, image: "menu/images/Kokam Mojito.jfif", isVeg: true, rating: 4.9 }
+      ]
+    },
+    {
+      name: "Desserts",
+      items: [
+        { id: "d1", name: "Ukadiche Modak", price: 30, image: "menu/images/Ukadiche Modak.jpg", isVeg: true, rating: 5.0 },
+        { id: "d2", name: "Gulab Jamun", price: 40, image: "menu/images/Gulab Jamun.jpg", isVeg: true, rating: 4.8 }
+      ]
+    },
+    {
+      name: "Extras",
+      items: [
+        { id: "e1", name: "Steam Rice", price: 80, image: "menu/images/Steam Rice.jfif", isVeg: true, rating: 4.5 },
+        { id: "e2", name: "Jeera Rice", price: 110, image: "menu/images/Jeera Rice.jpg", isVeg: true, rating: 4.6 },
+        { id: "e3", name: "Bhakri", price: 28, image: "menu/images/Bhakri.jpg", isVeg: true, rating: 4.8 },
+        { id: "e4", name: "Chapati", price: 18, image: "menu/images/Chapati.jpg", isVeg: true, rating: 4.7 },
+        { id: "e5", name: "Butter Chapati", price: 22, image: "menu/images/Butter Chapati.jfif", isVeg: true, rating: 4.8 },
+        { id: "e6", name: "Vade", price: 90, image: "menu/images/Vade.jfif", isVeg: true, rating: 4.9 }
+      ]
+    }
+  ]
+};
+
+const WA_NUMBER = '917045528239', UPI_ID = 'tabsaiyyad@okicici';
+let cart = JSON.parse(localStorage.getItem('k_cart_v3') || '[]'), orders = JSON.parse(localStorage.getItem('k_orders_v3') || '[]'), curCat = 'All', search = '', payM = 'COD';
+
+const save = () => { localStorage.setItem('k_cart_v3', JSON.stringify(cart)); localStorage.setItem('k_orders_v3', JSON.stringify(orders)); };
+
+const renderMenu = () => {
+    const grid = document.getElementById('menu-grid');
+    let items = [];
+    menuData.categories.forEach(c => c.items.forEach(i => items.push({...i, cat: c.name})));
+    if(curCat !== 'All') items = items.filter(i => i.cat === curCat);
+    if(search) items = items.filter(i => i.name.toLowerCase().includes(search));
+
+    grid.innerHTML = items.map(i => {
+        const ci = cart.find(c => c.id === i.id);
+        const imgPath = i.image; 
+        return `
+        <div class="glass-card menu-card rounded-[28px] overflow-hidden flex flex-col h-full fade-in" data-id="${i.id}">
+            <div class="relative w-full aspect-square overflow-hidden bg-stone-50 img-container">
+                <img src="${imgPath}" loading="lazy" alt="${i.name}" class="w-full h-full object-cover">
+                <div class="absolute top-3 right-3 veg-indicator ${i.isVeg?'veg':'non-veg'}"><div></div></div>
+                <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-2 py-1 rounded-lg flex items-center gap-1 shadow-sm border border-white/50 z-10">
+                    <span class="material-symbols-outlined text-[14px] text-yellow-500 fill-current">star</span>
+                    <span class="text-[10px] font-black text-stone-900">${i.rating || '4.8'}</span>
+                </div>
+            </div>
+            <div class="p-4 flex flex-col flex-1">
+                <h4 class="font-bold text-stone-900 text-[13px] leading-tight mb-3 line-clamp-1">${i.name}</h4>
+                <div class="mt-auto flex items-center justify-between">
+                    <span class="font-black text-stone-950 text-sm">₹${i.price}</span>
+                    <div id="btn-container-${i.id}">
+                        ${ci ? renderQtyBtn(i.id, ci.qty) : `<button onclick="add('${i.id}')" class="bg-primary text-white px-5 py-2 rounded-xl font-black text-[10px] uppercase">Add</button>`}
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }).join('');
+    updateCartBar();
+};
+
+const renderQtyBtn = (id, q) => `
+    <div class="flex items-center gap-2 bg-primary/5 rounded-xl p-1 border border-primary/10">
+        <button onclick="qty('${id}', -1)" class="w-8 h-8 flex items-center justify-center text-primary font-black bg-white rounded-lg shadow-sm">−</button>
+        <span class="font-black text-primary text-xs w-4 text-center">${q}</span>
+        <button onclick="qty('${id}', 1)" class="w-8 h-8 flex items-center justify-center text-white font-black bg-primary rounded-lg shadow-sm">+</button>
+    </div>
+`;
+
+const updateCartBar = () => {
+    const count = cart.reduce((a, i) => a + i.qty, 0), total = cart.reduce((a, i) => a + (i.price * i.qty), 0), b = document.getElementById('cart-bar');
+    if(count > 0) {
+        b.classList.remove('hidden');
+        document.getElementById('bar-cart-count').textContent = `${count} ITEM${count>1?'S':''}`;
+        document.getElementById('bar-cart-total').textContent = `₹${total}`;
+    } else b.classList.add('hidden');
+    document.getElementById('cart-total-amt').textContent = `₹${total}`;
+};
+
+window.setCat = (c) => { curCat = c; renderCats(); renderMenu(); };
+window.renderCats = () => {
+    const r = document.getElementById('cat-row');
+    const cats = ['All', ...menuData.categories.map(c => c.name)];
+    r.innerHTML = cats.map(c => `<button class="category-btn px-6 py-3 rounded-2xl flex-shrink-0 font-bold text-[10px] border border-stone-200 bg-white transition-all whitespace-nowrap uppercase tracking-widest ${c===curCat?'active':''}" onclick="setCat('${c}')">${c}</button>`).join('');
+};
+
+window.filterMenu = () => { 
+    search = document.getElementById('search-input').value.toLowerCase().trim(); 
+    const b = document.getElementById('search-banner'); 
+    if(search){ 
+        b.classList.remove('hidden'); 
+        document.getElementById('search-banner-text').textContent = `Showing results for "${search}"`; 
+    } else b.classList.add('hidden'); 
+    renderMenu(); 
+};
+
+window.handleSearch = (val) => {
+    filterMenu();
+    updateSuggestions(val);
+};
+
+window.quickSearch = (val) => {
+    document.getElementById('search-input').value = val;
+    handleSearch(val);
+};
+
+window.updateSuggestions = (val) => {
+    const s = document.getElementById('search-suggestions'), l = document.getElementById('suggestions-list');
+    if(!val) { s.classList.add('hidden'); return; }
+    
+    let matches = [];
+    menuData.categories.forEach(c => c.items.forEach(i => {
+        if(i.name.toLowerCase().includes(val.toLowerCase())) matches.push(i);
+    }));
+    
+    if(matches.length) {
+        s.classList.remove('hidden');
+        l.innerHTML = matches.slice(0, 5).map(i => `
+            <div onclick="quickSearch('${i.name}'); hideSuggestions();" class="flex items-center gap-3 p-3 hover:bg-stone-50 cursor-pointer rounded-2xl transition-colors">
+                <span class="material-symbols-outlined text-stone-300 text-sm">search</span>
+                <span class="text-xs font-bold text-stone-700">${i.name}</span>
+                <span class="ml-auto text-[10px] font-black text-primary">₹${i.price}</span>
+            </div>
+        `).join('');
+    } else s.classList.add('hidden');
+};
+
+window.showSuggestions = () => {
+    const val = document.getElementById('search-input').value;
+    if(val) updateSuggestions(val);
+};
+
+window.hideSuggestions = () => {
+    setTimeout(() => document.getElementById('search-suggestions').classList.add('hidden'), 200);
+};
+
+window.startVoiceSearch = () => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!SpeechRecognition) { showToast('Voice search not supported'); return; }
+    
+    const recognition = new SpeechRecognition();
+    recognition.lang = 'en-US';
+    recognition.start();
+    showToast('Listening...');
+    
+    recognition.onresult = (event) => {
+        const result = event.results[0][0].transcript;
+        document.getElementById('search-input').value = result;
+        handleSearch(result);
+    };
+};
+
+window.clearSearch = () => { 
+    document.getElementById('search-input').value = ''; 
+    handleSearch(''); 
+};
+window.add = (id) => { 
+    let item; menuData.categories.forEach(c => { const f = c.items.find(i => i.id === id); if(f) item = f; });
+    if(item) { cart.push({...item, qty: 1}); save(); renderMenu(); showToast(`Added ${item.name}`); }
+};
+window.qty = (id, d) => { const idx = cart.findIndex(c => c.id === id); if(idx > -1) { cart[idx].qty += d; if(cart[idx].qty <= 0) cart.splice(idx, 1); save(); renderMenu(); } };
+window.showToast = (t) => { const ts = document.getElementById('toast'); ts.textContent = t; ts.style.opacity = '1'; ts.style.transform = 'translate(-50%, -20px)'; setTimeout(() => { ts.style.opacity = '0'; ts.style.transform = 'translate(-50%, 0)'; }, 3000); };
+window.openCart = () => { renderCartItems(); document.getElementById('cart-modal').classList.add('open'); };
+window.closeCart = () => document.getElementById('cart-modal').classList.remove('open');
+window.renderCartItems = () => {
+    const l = document.getElementById('cart-items-list'), f = document.getElementById('cart-footer');
+    if(!cart.length) { l.innerHTML = `<div class="py-12 text-center text-stone-300">Cart is empty</div>`; f.classList.add('hidden'); return; }
+    f.classList.remove('hidden');
+    l.innerHTML = cart.map(i => `
+        <div class="flex items-center gap-4 bg-stone-50 p-4 rounded-3xl border border-stone-100">
+            <img src="${i.image}" class="w-16 h-16 rounded-2xl object-cover" onerror="this.src='${CAT_FALLBACKS[i.cat] || 'https://images.unsplash.com/photo-1546833998-877b37c2e582?w=100'}'">
+            <div class="flex-1"><h5 class="font-bold text-stone-800 text-xs">${i.name}</h5><p class="text-primary font-black text-xs mt-1">₹${i.price}</p></div>
+            ${renderQtyBtn(i.id, i.qty)}
+        </div>`).join('');
+};
+
+window.setPaymentMethod = (m) => { payM = m; const c = document.getElementById('pay-method-cod'), o = document.getElementById('pay-method-online'), ps = document.getElementById('payment-section'), pb = document.getElementById('place-order-btn'); if(m==='COD'){ c.classList.add('border-primary','bg-primary/5','text-primary'); c.classList.remove('border-stone-100','text-stone-400'); o.classList.add('border-stone-100','text-stone-400'); o.classList.remove('border-primary','bg-primary/5','text-primary'); ps.classList.add('hidden'); pb.classList.remove('hidden'); } else { o.classList.add('border-primary','bg-primary/5','text-primary'); o.classList.remove('border-stone-100','text-stone-400'); c.classList.add('border-stone-100','text-stone-400'); c.classList.remove('border-primary','bg-primary/5','text-primary'); const t = cart.reduce((a, i) => a + (i.price * i.qty), 0); document.getElementById('upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(`upi://pay?pa=${UPI_ID}&pn=Kinara&am=${t}&cu=INR`) }`; ps.classList.remove('hidden'); pb.classList.add('hidden'); } };
+
+window.placeOrder = () => {
+    const p = JSON.parse(localStorage.getItem('k_prof') || '{}');
+    if(!p.name || !p.phone) { showToast('Complete profile'); openProfile(); return; }
+    const t = cart.reduce((a, i) => a + (i.price * i.qty), 0), id = Math.floor(1000 + Math.random()*9000), d = new Date().toLocaleString();
+    const nO = {id, date: d, items: [...cart], total: t, method: payM}; 
+    orders.push(nO); 
+    
+    let msg = `*NEW ORDER - KINARA SEAFOOD*\n*ID:* #${id}\n*Customer:* ${p.name}\n*Phone:* ${p.phone}\n*Address:* ${p.address}\n\n*ITEMS:*\n`;
+    cart.forEach(i => msg += `• ${i.name} x ${i.qty} = ₹${i.price * i.qty}\n`); msg += `\n*TOTAL: ₹${t}*`;
+    
+    cart = []; 
+    save(); 
+    renderMenu();
+    closeCart();
+    openStatus(nO);
+    setTimeout(() => { window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank'); }, 800);
+};
+
+window.openStatus = (o) => { document.getElementById('status-order-id').textContent = o.id; document.getElementById('status-total-amt').textContent = `₹${o.total}`; document.getElementById('status-items-list').innerHTML = o.items.map(i => `<div class="flex justify-between py-2 border-b border-stone-100"><p class="text-xs font-bold text-stone-800">${i.name} x ${i.qty}</p><p class="text-xs font-black text-stone-900">₹${i.price * i.qty}</p></div>`).join(''); document.getElementById('status-modal').classList.add('open'); };
+window.closeStatus = () => document.getElementById('status-modal').classList.remove('open');
+window.openProfile = () => document.getElementById('profile-modal').classList.add('open');
+window.closeProfile = () => document.getElementById('profile-modal').classList.remove('open');
+window.saveProfile = () => { const p = {name: document.getElementById('prof-name').value, phone: document.getElementById('prof-phone').value, address: document.getElementById('prof-addr').value}; if(!p.name || !p.phone){ showToast('Required fields'); return; } localStorage.setItem('k_prof', JSON.stringify(p)); showToast('Profile saved'); closeProfile(); };
+window.openOrders = () => { const l = document.getElementById('orders-history-list'); if(!orders.length) { l.innerHTML = `<p class="text-center text-stone-300">No orders</p>`; } else { l.innerHTML = [...orders].reverse().map(o => `<div class="bg-stone-50 p-4 rounded-3xl border border-stone-100"><div class="flex justify-between mb-2"><div><p class="text-[9px] font-black text-stone-400 uppercase">${o.date}</p><p class="text-sm font-black">#${o.id}</p></div><div class="text-[10px] font-black text-primary">₹${o.total}</div></div></div>`).join(''); } document.getElementById('orders-modal').classList.add('open'); };
+window.closeOrders = () => document.getElementById('orders-modal').classList.remove('open');
+
+document.addEventListener('DOMContentLoaded', () => {
+    const p = JSON.parse(localStorage.getItem('k_prof') || '{}');
+    if(p.name) { document.getElementById('prof-name').value = p.name; document.getElementById('prof-phone').value = p.phone; document.getElementById('prof-addr').value = p.address; }
+    renderCats(); renderMenu();
+});
+</script>
+</body>
+</html>
