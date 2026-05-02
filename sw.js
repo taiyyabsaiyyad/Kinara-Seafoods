@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kinara-cache-v1';
+const CACHE_NAME = 'kinara-cache-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -7,12 +7,27 @@ const ASSETS = [
   './logo-main.png',
   './Hero (2).png',
   './hero-mobile.png',
-  './bg.png'
+  './bg.png',
+  './manifest.json'
 ];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
     caches.open(CACHE_NAME).then((cache) => cache.addAll(ASSETS))
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((key) => {
+          if (key !== CACHE_NAME) {
+            return caches.delete(key);
+          }
+        })
+      );
+    })
   );
 });
 
