@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kinara-cache-v5';
+const CACHE_NAME = 'kinara-cache-v16';
 const ASSETS = [
   './',
   './index.html',
@@ -8,7 +8,9 @@ const ASSETS = [
   './Hero (2).png',
   './hero-mobile.png',
   './bg.png',
-  './manifest.json'
+  './manifest.json',
+  './hyper-realistic-cinematic-169-horizontal-seamless-.mp4',
+  './hyper-realistic-cinematic-916-vertical-video-of-a-.mp4'
 ];
 
 self.addEventListener('install', (e) => {

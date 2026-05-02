@@ -7,6 +7,8 @@
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#e23744">
     <link rel="apple-touch-icon" href="logo-main.png">
@@ -56,11 +58,18 @@
 
         /* Glassmorphic Cards */
         .glass-card {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 35px rgba(0, 0, 0, 0.05);
+        }
+
+        .glass-card-dark {
+            background: rgba(15, 15, 15, 0.8);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -121,6 +130,60 @@
             100% { transform: scale(1); }
         }
         .cart-pop { animation: pop 0.3s ease-out; }
+
+        /* Nav specific styles */
+        .nav-item {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-decoration: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .icon-wrapper {
+            transition: all 0.3s ease;
+        }
+        .active-indicator {
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transform: translateY(10px);
+            opacity: 0;
+        }
+        .active .active-indicator {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .active .icon-wrapper {
+            transform: translateY(-2px);
+        }
+
+        /* Cart Specific Enhancements */
+        .cart-item-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .cart-item-card:hover {
+            background: white;
+            transform: scale(1.02);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.05);
+        }
+        
+        .empty-cart-gradient {
+            background: radial-gradient(circle at center, var(--sea-mist) 0%, transparent 70%);
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .animate-slide-in { animation: slideInRight 0.4s ease forwards; }
+
+        .dashed-line {
+            background-image: linear-gradient(to right, #e5e7eb 50%, transparent 50%);
+            background-position: bottom;
+            background-size: 8px 1px;
+            background-repeat: repeat-x;
+            height: 1px;
+            width: 100%;
+        }
     </style>
 </head>
 <body class="text-stone-800">
@@ -150,12 +213,24 @@
 
 <main class="pt-24 px-4 max-w-7xl mx-auto space-y-6">
 
-    <!-- Hero Section -->
-    <section id="hero-section" class="relative w-full aspect-[4/5] md:aspect-[21/9] rounded-2xl overflow-hidden shadow-lg transition-all duration-500">
-        <picture>
-            <source media="(max-width: 768px)" srcset="hero-mobile.png">
-            <img src="Hero (2).png" class="w-full h-full object-cover" alt="Hero Banner">
-        </picture>
+    <!-- Hero Section with Cinematic Video -->
+    <section id="hero-section" class="relative w-full aspect-[9/16] md:aspect-[16/9] rounded-2xl overflow-hidden shadow-2xl shadow-primary/10 transition-all duration-700 bg-stone-900">
+        <!-- Desktop Cinematic Video -->
+        <video 
+            class="hidden md:block w-full h-full object-cover" 
+            autoplay muted loop playsinline preload="auto"
+            poster="Hero (2).png">
+            <source src="hyper-realistic-cinematic-169-horizontal-seamless-.mp4" type="video/mp4">
+        </video>
+        <!-- Mobile Cinematic Video -->
+        <video 
+            class="block md:hidden w-full h-full object-cover" 
+            autoplay muted loop playsinline preload="auto"
+            poster="hero-mobile.png">
+            <source src="hyper-realistic-cinematic-916-vertical-video-of-a-.mp4" type="video/mp4">
+        </video>
+        <!-- Dark Gradient Overlay for text readability -->
+        <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none"></div>
     </section>
 
     <!-- Search Bar -->
@@ -164,12 +239,34 @@
         <input id="search-input" type="search" placeholder="Search delicious seafood..." oninput="filterMenu()" class="w-full bg-white border border-stone-100 rounded-xl py-3 pl-10 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none shadow-sm">
     </div>
 
+    <!-- Order Mode Switcher -->
+    <div class="px-1 mt-2">
+        <div class="bg-white/50 backdrop-blur-xl p-1.5 rounded-2xl border border-white/40 flex gap-1 shadow-sm">
+            <button id="mode-delivery" onclick="setOrderMode('DELIVERY')" class="flex-1 py-3 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-black text-[10px] uppercase tracking-widest bg-white shadow-sm text-primary">
+                <span class="material-symbols-outlined text-[18px]">delivery_dining</span>
+                Delivery
+            </button>
+            <button id="mode-dinein" onclick="setOrderMode('DINE_IN')" class="flex-1 py-3 rounded-[14px] flex items-center justify-center gap-2 transition-all duration-500 font-black text-[10px] uppercase tracking-widest text-stone-400">
+                <span class="material-symbols-outlined text-[18px]">restaurant</span>
+                Dine-In
+            </button>
+        </div>
+    </div>
+
     <!-- Veg Only Toggle -->
-    <div class="flex justify-end items-center gap-3 px-1">
-        <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pure Veg Only</span>
-        <button id="veg-toggle" onclick="toggleVegOnly()" class="w-12 h-6 bg-stone-200 rounded-full relative transition-all duration-300">
-            <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 transform" id="veg-toggle-circle"></div>
-        </button>
+    <div class="flex justify-between items-center gap-3 px-1">
+        <div id="dine-in-status" class="hidden animate-fade-in">
+            <p class="text-[9px] font-black text-green-600 uppercase tracking-widest flex items-center gap-1.5 bg-green-50 px-3 py-1 rounded-full border border-green-100">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                In-Restaurant Mode
+            </p>
+        </div>
+        <div class="flex items-center gap-3 ml-auto">
+            <span class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Pure Veg Only</span>
+            <button id="veg-toggle" onclick="toggleVegOnly()" class="w-12 h-6 bg-stone-200 rounded-full relative transition-all duration-300">
+                <div class="absolute top-1 left-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300 transform" id="veg-toggle-circle"></div>
+            </button>
+        </div>
     </div>
 
     <!-- Categories -->
@@ -274,22 +371,32 @@
     </section>
 </main>
 
-<!-- Bottom Nav -->
-<nav class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-stone-100 px-8 py-3 flex justify-around items-center z-40">
-    <button onclick="scrollToTop()" class="flex flex-col items-center gap-1 text-primary">
-        <span class="material-symbols-outlined text-[24px] fill-current">home</span>
-        <span class="text-[10px] font-black uppercase tracking-widest">Home</span>
-    </button>
-    <button onclick="openCart()" class="relative flex flex-col items-center gap-1 text-stone-400">
-        <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
-        <span class="text-[10px] font-black uppercase tracking-widest">Cart</span>
-        <div id="cart-badge" class="hidden absolute -top-1 -right-2 bg-primary text-white text-[9px] w-4.5 h-4.5 rounded-full flex items-center justify-center font-black border-2 border-white">0</div>
-    </button>
-    <button onclick="openOrders()" class="flex flex-col items-center gap-1 text-stone-400">
-        <span class="material-symbols-outlined text-[24px]">receipt_long</span>
-        <span class="text-[10px] font-black uppercase tracking-widest">Orders</span>
-    </button>
-</nav>
+<!-- Classy Floating Bottom Nav -->
+<div class="fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] max-w-md z-50">
+    <nav class="bg-white/80 backdrop-blur-2xl border border-white/20 px-8 py-3.5 rounded-[32px] shadow-[0_20px_50px_rgba(0,0,0,0.1)] flex justify-around items-center">
+        <button id="nav-home" onclick="switchTab('home')" class="flex flex-col items-center gap-1.5 transition-all duration-300 text-primary">
+            <div class="relative">
+                <span class="material-symbols-outlined text-[22px] fill-current">home</span>
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full"></div>
+            </div>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em]">Home</span>
+        </button>
+        
+        <button id="nav-cart" onclick="openCart()" class="relative flex flex-col items-center gap-1.5 transition-all duration-300 text-stone-400 hover:text-primary">
+            <span class="material-symbols-outlined text-[22px]">shopping_cart</span>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em]">Cart</span>
+            <div id="cart-badge" class="hidden absolute -top-2 -right-3 bg-primary text-white text-[9px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-black border-2 border-white shadow-lg shadow-primary/20">0</div>
+        </button>
+        
+        <button id="nav-orders" onclick="switchTab('orders')" class="flex flex-col items-center gap-1.5 transition-all duration-300 text-stone-400 hover:text-primary">
+            <div class="relative">
+                <span class="material-symbols-outlined text-[22px]">receipt_long</span>
+                <div class="absolute -bottom-1 left-1/2 -translate-x-1/2 w-1 h-1 bg-primary rounded-full hidden"></div>
+            </div>
+            <span class="text-[9px] font-black uppercase tracking-[0.2em]">Orders</span>
+        </button>
+    </nav>
+</div>
 
 <!-- MODALS -->
 
@@ -327,54 +434,147 @@
     </div>
 </div>
 
-<!-- Cart Modal -->
+<!-- Cart Modal (Classy Version) -->
 <div id="cart-modal" class="modal-overlay" onclick="if(event.target===this) closeCart()">
-    <div class="modal-content">
-        <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
-        <div class="flex justify-between items-center mb-6">
-            <h2 class="text-2xl font-black text-stone-900">Your Cart</h2>
-            <button onclick="closeCart()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
-                <span class="material-symbols-outlined text-[20px]">close</span>
+    <div class="modal-content !p-0 overflow-hidden bg-white/90 backdrop-blur-2xl max-w-md mx-auto border-t border-white/40 shadow-2xl">
+        <!-- Header -->
+        <div class="p-8 pb-6 flex justify-between items-center relative">
+            <div>
+                <h2 class="text-2xl font-black text-stone-900 uppercase tracking-tighter">Your Feast</h2>
+                <p class="text-[10px] font-black text-stone-400 uppercase tracking-[0.25em] mt-1 flex items-center gap-2">
+                    <span class="w-1.5 h-1.5 bg-primary rounded-full animate-pulse"></span>
+                    Review your selection
+                </p>
+            </div>
+            <button onclick="closeCart()" class="w-11 h-11 bg-stone-100 rounded-full flex items-center justify-center text-stone-900 active:scale-90 transition-all shadow-sm">
+                <span class="material-symbols-outlined text-[20px] font-bold">close</span>
             </button>
         </div>
-        <div id="cart-items-list" class="space-y-4 mb-8"></div>
-        <div id="cart-footer" class="space-y-4 border-t border-stone-100 pt-6">
-            <div class="flex justify-between items-center px-1">
-                <span class="text-stone-400 font-bold uppercase text-[10px] tracking-widest">Grand Total</span>
-                <span id="cart-total-amt" class="text-2xl font-black text-stone-950 text-primary">₹0</span>
+
+        <div class="px-8 pb-8 max-h-[70vh] overflow-y-auto no-scrollbar">
+            <!-- Items List -->
+            <div id="cart-items-list" class="space-y-4 mb-10">
+                <!-- Empty state will be injected here by JS if needed -->
             </div>
-            <div class="flex gap-2">
-                <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex-1 py-3 rounded-xl border-2 border-primary bg-red-50 text-primary font-bold text-xs">COD</button>
-                <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="flex-1 py-3 rounded-xl border-2 border-stone-100 text-stone-500 font-bold text-xs">Pay Online</button>
-            </div>
-            <div id="payment-section" class="hidden flex flex-col gap-4 bg-stone-50 p-6 rounded-2xl border border-stone-100">
-                <div class="flex flex-col items-center gap-3">
-                    <div class="bg-primary/10 text-primary px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest">Step 1: Scan & Pay</div>
-                    <img id="upi-qr" src="" class="w-44 h-44 rounded-2xl shadow-md border-4 border-white" alt="UPI QR">
-                    <p class="text-[10px] font-bold text-stone-500 text-center leading-relaxed px-4">Step 2: Take a <span class="text-primary font-black">Screenshot</span> of your payment receipt</p>
+
+            <!-- Table Number Section (Dine-In Only) -->
+            <div id="dine-in-fields" class="hidden mb-10 space-y-4 animate-slide-up">
+                <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest text-center">Your Table Details</p>
+                <div class="relative">
+                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg">restaurant</span>
+                    <input id="table-number" type="number" placeholder="Enter Table Number (e.g. 05)" class="w-full bg-stone-50 border-stone-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none">
                 </div>
-                
-                <div class="space-y-3 pt-4 border-t border-stone-200">
-                    <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center">Step 3: Share Details</p>
-                    <button id="whatsapp-share-btn" onclick="shareOnWhatsApp()" class="w-full bg-[#25D366] text-white py-3.5 rounded-xl font-black text-xs flex justify-center items-center gap-2 shadow-lg shadow-green-500/20 active:scale-95 transition-all">
-                        <span class="material-symbols-outlined text-[18px]">chat</span> Share Order & SS
-                    </button>
+            </div>
+            
+            <div id="cart-footer" class="space-y-8 hidden">
+                <!-- Bill Breakdown -->
+                <div class="space-y-5">
+                    <div class="flex justify-between items-center text-[10px] font-black text-stone-400 uppercase tracking-[0.15em]">
+                        <span>Bill Details</span>
+                        <div class="h-[1px] flex-1 mx-4 bg-stone-100"></div>
+                    </div>
                     
-                    <div class="flex flex-col gap-2 pt-2">
-                        <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest text-center">Step 4: Confirm Sharing</p>
-                        <button id="ss-toggle-btn" onclick="toggleSSShared()" class="w-full bg-orange-500 text-white py-3 rounded-xl font-black text-[10px] uppercase tracking-[0.15em] transition-all shadow-md active:scale-95">
-                            Screenshot Shared?
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center text-xs font-bold text-stone-600">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-stone-300 text-[18px]">receipt</span>
+                                Item Total
+                            </span>
+                            <span id="cart-items-amt" class="text-stone-900 font-black">₹0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-xs font-bold text-stone-600">
+                            <span class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-stone-300 text-[18px]">delivery_dining</span>
+                                <span id="delivery-label">Delivery Fee</span>
+                            </span>
+                            <span id="delivery-amt" class="text-stone-900 font-black">₹0</span>
+                        </div>
+                        
+                        <!-- Tip Section -->
+                        <div class="pt-2">
+                            <div class="flex justify-between items-center mb-3">
+                                <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest">Support Staff with Tip</p>
+                                <p id="tip-amt-display" class="text-[10px] font-black text-primary uppercase">₹0</p>
+                            </div>
+                            <div class="flex gap-2">
+                                <button onclick="setTip(0)" id="tip-btn-0" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all bg-white shadow-sm text-primary border-primary/20">None</button>
+                                <button onclick="setTip(20)" id="tip-btn-20" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹20</button>
+                                <button onclick="setTip(50)" id="tip-btn-50" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹50</button>
+                                <button onclick="setTip(100)" id="tip-btn-100" class="flex-1 py-2.5 rounded-xl border border-stone-100 text-[10px] font-black uppercase transition-all text-stone-400 hover:bg-stone-50">₹100</button>
+                            </div>
+                        </div>
+                        <div class="pt-5 dashed-line"></div>
+                        <div class="flex justify-between items-end">
+                            <div>
+                                <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] mb-1">Total Amount</p>
+                                <p id="cart-total-amt" class="text-3xl font-black text-stone-900 tracking-tighter">₹0</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-[9px] font-black text-green-600 uppercase tracking-[0.1em] bg-green-50 px-2 py-1 rounded-md mb-1">Inclusive of Taxes</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Selection -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="h-[1px] flex-1 bg-stone-100"></div>
+                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Payment Method</p>
+                        <div class="h-[1px] flex-1 bg-stone-100"></div>
+                    </div>
+                    
+                    <div id="payment-modes-container" class="grid grid-cols-2 gap-3">
+                        <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 bg-white border-primary shadow-sm">
+                            <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-900">COD</span>
+                        </button>
+                        
+                        <button id="pay-method-dine" onclick="setPaymentMethod('DINE_PAY')" class="hidden flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50">
+                            <span class="material-symbols-outlined text-stone-400 text-[20px]">restaurant_menu</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Eat & Pay</span>
+                        </button>
+                        
+                        <button id="pay-method-online" onclick="setPaymentMethod('ONLINE')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50">
+                            <span class="material-symbols-outlined text-stone-400 text-[20px]">qr_code_2</span>
+                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Online</span>
                         </button>
                     </div>
                 </div>
 
-                <button id="final-confirm-btn" onclick="confirmOnlineOrder()" class="hidden w-full bg-stone-900 text-white py-4 rounded-xl font-black text-xs mt-2 shadow-xl active:scale-95 transition-all">
-                    Finalize Order & Show Paid
+                <!-- Online Payment Details -->
+                <div id="payment-section" class="hidden">
+                    <div class="bg-stone-900 rounded-[40px] p-8 text-center space-y-8 shadow-2xl relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/50 to-transparent"></div>
+                        
+                        <div class="space-y-3">
+                            <p class="text-[10px] font-black text-white/40 uppercase tracking-[0.4em]">Scan to Pay</p>
+                            <div class="inline-block p-6 bg-white rounded-[32px] shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
+                                <img id="upi-qr" src="" class="w-44 h-44 rounded-2xl" alt="UPI QR">
+                            </div>
+                            <p class="text-[11px] font-black text-white/90 uppercase mt-4">Kinara Seafoods</p>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <button id="whatsapp-share-btn" onclick="shareOnWhatsApp()" class="w-full bg-[#25D366] text-white py-4.5 rounded-2xl font-black text-[11px] uppercase tracking-widest flex justify-center items-center gap-3 shadow-xl shadow-green-500/20 active:scale-95 transition-all">
+                                <svg class="w-5 h-5 fill-current" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                                Share Screenshot
+                            </button>
+                            <button id="ss-toggle-btn" onclick="toggleSSShared()" class="w-full bg-white/5 border border-white/10 text-white/60 py-3.5 rounded-2xl font-black text-[9px] uppercase tracking-[0.2em] transition-all">
+                                I have shared the SS
+                            </button>
+                            <button id="final-confirm-btn" class="hidden w-full bg-primary text-white py-4.5 rounded-2xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl animate-pulse" onclick="confirmOnlineOrder()">
+                                Confirm Payment Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COD CTA -->
+                <button id="place-order-btn" onclick="placeOrder()" class="w-full bg-stone-900 text-white py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.25em] flex justify-center items-center gap-3 shadow-[0_15px_30px_rgba(0,0,0,0.15)] active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-[20px]">local_shipping</span> Place Order Now
                 </button>
             </div>
-            <button id="place-order-btn" onclick="placeOrder()" class="w-full bg-[#25D366] text-white py-4 rounded-2xl font-black text-[15px] flex justify-center items-center gap-2 shadow-xl shadow-green-600/10">
-                <span class="material-symbols-outlined text-[20px]">chat</span> Place Order on WhatsApp
-            </button>
         </div>
     </div>
 </div>
@@ -419,19 +619,107 @@
                 <span class="material-symbols-outlined text-[16px]">home</span> Back to Home
             </button>
         </div>
-        <div id="orders-history-list" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar"></div>
+        <div id="orders-history-list" class="space-y-4 max-h-[60vh] overflow-y-auto no-scrollbar pb-10"></div>
+    </div>
+</div>
+
+<!-- Tracking Modal (Cinematic Small Navigation) -->
+<div id="tracking-modal" class="modal-overlay" onclick="if(event.target===this) closeTracking()">
+    <div class="modal-content !p-0 overflow-hidden bg-white max-w-md mx-auto">
+        <!-- Cinematic Map Section -->
+        <div class="relative h-64 w-full bg-stone-900">
+            <div id="history-map" class="w-full h-full"></div>
+            <div id="history-map-loader" class="absolute inset-0 flex items-center justify-center bg-stone-900/50 backdrop-blur-sm z-[20]">
+                <span class="animate-spin material-symbols-outlined text-primary text-2xl">sync</span>
+            </div>
+            <!-- Close Button Overlay -->
+            <button onclick="closeTracking()" class="absolute top-4 right-4 z-[25] w-9 h-9 bg-white/20 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white active:scale-90 transition-all">
+                <span class="material-symbols-outlined text-[18px]">close</span>
+            </button>
+        </div>
+
+        <!-- Details Section -->
+        <div class="p-6 space-y-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-black text-stone-900 uppercase tracking-tight">Order Tracking</h3>
+                    <p class="text-[10px] font-black text-primary uppercase tracking-[0.2em]">Out for Delivery</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest">Est. Arrival</p>
+                    <p id="track-eta" class="text-base font-black text-stone-900">-- Mins</p>
+                </div>
+            </div>
+
+            <!-- Rider Card -->
+            <div class="bg-stone-50 rounded-2xl p-4 border border-stone-100 flex items-center gap-4">
+                <div class="w-12 h-12 bg-white rounded-xl flex items-center justify-center shadow-sm overflow-hidden border border-stone-100">
+                    <img src="logo-main.png" class="w-8 h-8 object-contain">
+                </div>
+                <div class="flex-1">
+                    <p class="text-[9px] font-black text-stone-400 uppercase tracking-widest">Your Delivery Partner</p>
+                    <p class="text-sm font-extrabold text-stone-900">Rajesh Kumar</p>
+                    <p class="text-[10px] font-bold text-stone-500">Verified Professional</p>
+                </div>
+                <button onclick="window.location.href='tel:9876543210'" class="w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 active:scale-95 transition-all">
+                    <span class="material-symbols-outlined text-[20px]">call</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="grid grid-cols-2 gap-3">
+                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100 text-center">
+                    <p class="text-[8px] font-black text-stone-400 uppercase tracking-[0.2em] mb-1">Total Distance</p>
+                    <p id="track-dist" class="text-sm font-black text-stone-900">0.0 KM</p>
+                </div>
+                <div class="bg-stone-50 p-4 rounded-2xl border border-stone-100 text-center">
+                    <p class="text-[8px] font-black text-stone-400 uppercase tracking-[0.2em] mb-1">Service</p>
+                    <p class="text-sm font-black text-stone-900">Premium</p>
+                </div>
+            </div>
+
+            <!-- Social Media Section -->
+            <div class="pt-4 border-t border-stone-100 text-center">
+                <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest mb-4">Stay Connected with us</p>
+                <a href="https://www.instagram.com/kinara_seafood_restaurant/" target="_blank" class="inline-flex items-center gap-2 bg-stone-900 text-white px-6 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-primary transition-colors active:scale-95">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    Follow on Instagram
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 
 <div id="toast" class="fixed bottom-24 left-1/2 -translate-x-1/2 bg-stone-900 text-white px-6 py-3 rounded-full text-xs font-bold shadow-xl transition-all duration-300 opacity-0 pointer-events-none z-50 translate-y-4"></div>
 
     <!-- Order Confirmed Overlay -->
-    <div id="confirmed-overlay" class="fixed inset-0 z-[100] bg-primary flex flex-col items-center justify-center text-white opacity-0 pointer-events-none transition-all duration-500">
-        <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-6 animate-bounce">
-            <span class="material-symbols-outlined text-primary text-5xl font-black">check</span>
+    <div id="confirmed-overlay" class="fixed inset-0 z-[100] bg-stone-900 flex flex-col items-center justify-center text-white opacity-0 pointer-events-none transition-all duration-500 px-6">
+        <div class="w-16 h-16 bg-primary rounded-full flex items-center justify-center mb-4 shadow-xl">
+            <span class="material-symbols-outlined text-white text-3xl font-black">check</span>
         </div>
-        <h2 class="text-2xl font-black uppercase tracking-widest mb-2">Order Confirmed</h2>
-        <p class="text-white/80 font-bold text-xs">Preparing your Malvani feast...</p>
+        <h2 class="text-xl font-black uppercase tracking-widest mb-1">Order Confirmed</h2>
+        <p class="text-stone-400 font-bold text-[10px] uppercase tracking-widest mb-6">Preparing your Malvani feast</p>
+        
+        <div id="tracking-map" class="w-full aspect-[4/3] bg-stone-800 rounded-3xl border border-white/10 overflow-hidden shadow-2xl relative">
+            <!-- Map will load here -->
+            <div id="map-loader" class="absolute inset-0 flex items-center justify-center bg-stone-900/50 backdrop-blur-sm z-10">
+                <span class="animate-spin material-symbols-outlined text-primary">sync</span>
+            </div>
+        </div>
+
+        <div class="w-full mt-6 space-y-3">
+            <div class="flex justify-between items-center bg-white/5 p-4 rounded-2xl border border-white/5">
+                <div>
+                    <p class="text-[9px] font-black text-stone-500 uppercase tracking-widest">Est. Delivery Time</p>
+                    <p id="eta-text" class="text-sm font-black text-white">25 - 35 Mins</p>
+                </div>
+                <div class="text-right">
+                    <p class="text-[9px] font-black text-stone-500 uppercase tracking-widest">Distance</p>
+                    <p id="dist-text" class="text-sm font-black text-primary">0.0 KM</p>
+                </div>
+            </div>
+            <button onclick="closeStatus(); switchTab('home')" class="w-full bg-primary text-white py-4 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">Back to Home</button>
+        </div>
     </div>
 
     <script src="data.js"></script>
