@@ -1,6 +1,7 @@
 const UPI_ID = typeof KINARA_CONFIG !== 'undefined' ? KINARA_CONFIG.UPI_ID : 'tabsaiyyad@okicici';
 const UPI_NAME = typeof KINARA_CONFIG !== 'undefined' ? KINARA_CONFIG.UPI_NAME : 'Kinara Sea Food';
 const WA_NUMBER = typeof KINARA_CONFIG !== 'undefined' ? KINARA_CONFIG.WA_NUMBER : '917045528239';
+const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do";
 
 let cart = JSON.parse(localStorage.getItem('kinara_cart') || '[]');
 let orders = JSON.parse(localStorage.getItem('kinara_orders') || '[]');
@@ -10,15 +11,13 @@ let paymentMethod = 'COD';
 let isVegOnly = false;
 let isSSShared = false;
 
-document.addEventListener('DOMContentLoaded', () => {
-    init();
-});
-
+// Initialize the app
 function init() {
+    loadProfile();
+    updateCart();
     renderCategories();
     renderMenu();
-    updateCart();
-    loadProfile();
+    renderOrdersHistory();
     
     // Global function bindings
     window.setCat = setCat;
@@ -43,7 +42,10 @@ function init() {
     window.toggleSSShared = toggleSSShared;
     window.confirmOnlineOrder = confirmOnlineOrder;
     window.switchTab = switchTab;
+    window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
 }
+
+document.addEventListener('DOMContentLoaded', init);
 
 function switchTab(tab) {
     if (tab === 'home') {
@@ -191,6 +193,7 @@ function renderOrdersHistory() {
 
 function renderCategories() {
     const row = document.getElementById('cat-row');
+    if (!row) return;
     const categories = ['All', ...menuData.categories.map(c => c.name)];
     row.innerHTML = categories.map(cat => {
         const activeClass = cat === currentCategory ? "active-cat" : "bg-white/80 text-stone-500 border-stone-200 hover:bg-white";
@@ -223,6 +226,7 @@ function clearSearch() {
 
 function renderMenu() {
     const grid = document.getElementById('menu-grid');
+    if (!grid) return;
     let items = [];
     menuData.categories.forEach(cat => cat.items.forEach(item => items.push({ ...item, categoryName: cat.name })));
     if (currentCategory !== 'All') items = items.filter(i => i.categoryName === currentCategory);
@@ -293,7 +297,9 @@ function updateCart() {
         }
     }
 
-    document.getElementById('cart-total-amt').textContent = `₹${total}`;
+    const totalAmtEl = document.getElementById('cart-total-amt');
+    if (totalAmtEl) totalAmtEl.textContent = `₹${total}`;
+    
     renderCartItems();
     renderMenu();
 }
@@ -301,6 +307,8 @@ function updateCart() {
 function renderCartItems() {
     const list = document.getElementById('cart-items-list');
     const footer = document.getElementById('cart-footer');
+    if (!list || !footer) return;
+    
     if (cart.length === 0) {
         list.innerHTML = `<div class="flex flex-col items-center py-10 text-stone-400 text-sm">Your cart is empty</div>`;
         footer.classList.add('hidden'); return;
@@ -346,18 +354,25 @@ function placeOrder() {
     
     // Show Order Confirmed Screen for 2.5 seconds
     const overlay = document.getElementById('confirmed-overlay');
-    overlay.classList.remove('pointer-events-none');
-    overlay.classList.add('opacity-100');
-    
-    setTimeout(() => {
-        overlay.classList.remove('opacity-100');
-        overlay.classList.add('pointer-events-none');
+    if (overlay) {
+        overlay.classList.remove('pointer-events-none');
+        overlay.classList.add('opacity-100');
         
+        setTimeout(() => {
+            overlay.classList.remove('opacity-100');
+            overlay.classList.add('pointer-events-none');
+            
+            closeCart();
+            cart = []; // Clear cart after order is confirmed
+            updateCart();
+            openOrders(); // Go to tracking section
+        }, 2500);
+    } else {
         closeCart();
-        cart = []; // Clear cart after order is confirmed
+        cart = [];
         updateCart();
-        openOrders(); // Go to tracking section
-    }, 2500);
+        openOrders();
+    }
 }
 
 function openStatus(orderData) {
@@ -377,10 +392,21 @@ function saveProfile() {
 }
 function loadProfile() {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
-    if (profile.name) { document.getElementById('prof-name').value = profile.name; document.getElementById('prof-email').value = profile.email; document.getElementById('prof-phone').value = profile.phone; document.getElementById('prof-addr').value = profile.address; }
+    if (profile.name) { 
+        const nameEl = document.getElementById('prof-name');
+        const emailEl = document.getElementById('prof-email');
+        const phoneEl = document.getElementById('prof-phone');
+        const addrEl = document.getElementById('prof-addr');
+        if(nameEl) nameEl.value = profile.name; 
+        if(emailEl) emailEl.value = profile.email; 
+        if(phoneEl) phoneEl.value = profile.phone; 
+        if(addrEl) addrEl.value = profile.address; 
+    }
 }
 function showToast(text) {
-    const toast = document.getElementById('toast'); toast.textContent = text; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -20px)';
+    const toast = document.getElementById('toast'); 
+    if(!toast) return;
+    toast.textContent = text; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -20px)';
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 0)'; }, 3000);
 }
 
@@ -390,17 +416,6 @@ function closeStatus() {
     updateCart();
 }
 
-
-const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do";
-window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
-
-// Initialize the app
-function init() {
-    loadProfile();
-    updateCart();
-    renderCategories();
-    renderMenu();
-    renderOrdersHistory();
+function confirmOnlinePayment() {
+    // Placeholder if needed
 }
-
-document.addEventListener('DOMContentLoaded', init);
