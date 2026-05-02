@@ -390,5 +390,17 @@ function closeStatus() {
     updateCart();
 }
 
+
 const GOOGLE_REVIEW_URL = "https://search.google.com/local/writereview?placeid=ChIJvfrOGBPD5zsRn4_OU6KH7do";
 window.GOOGLE_REVIEW_URL = GOOGLE_REVIEW_URL;
+
+// Initialize the app
+function init() {
+    loadProfile();
+    updateCart();
+    renderCategories();
+    renderMenu();
+    renderOrdersHistory();
+}
+
+document.addEventListener('DOMContentLoaded', init);
