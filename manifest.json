@@ -8,13 +8,13 @@
   "description": "Authentic Malvani Seafood Ordering App",
   "icons": [
     {
-      "src": "Main APP logo.png",
+      "src": "logo-main.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "Main APP logo.png",
+      "src": "logo-main.png",
       "sizes": "512x512",
       "type": "image/png"
     }
