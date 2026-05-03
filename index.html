@@ -6,6 +6,7 @@
     <title>Kinara Sea Food | Digital App</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700;800&amp;display=swap" rel="stylesheet"/>
+    <link rel="stylesheet" href="index.css?v=2.5">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -453,6 +454,11 @@
                 <div class="bg-green-100 text-green-700 px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter">Open Now</div>
             </div>
         </div>
+        <!-- Footer / Version Info -->
+        <div class="px-6 py-10 text-center space-y-3">
+            <p class="text-[10px] font-black text-stone-300 uppercase tracking-[0.3em]">Kinara Seafoods • v2.5</p>
+            <p class="text-[8px] font-bold text-stone-200 uppercase tracking-widest">Pioneering Freshness since 2024</p>
+        </div>
     </section>
 </main>
 
@@ -732,6 +738,7 @@
         <div class="w-12 h-1.5 bg-stone-100 rounded-full mx-auto mb-6"></div>
         <div class="flex justify-between items-center mb-6">
             <h2 class="text-2xl font-black text-stone-900">Your Profile</h2>
+            <span class="bg-stone-100 text-stone-400 text-[8px] font-black px-2 py-1 rounded-full">BUILD v2.5</span>
             <button onclick="closeProfile()" class="w-9 h-9 bg-stone-50 rounded-full flex items-center justify-center text-stone-400">
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
@@ -1002,8 +1009,18 @@
     </div>
 
     <script src="data.js"></script>
-    <script src="app.js"></script>
+    <script src="app.js?v=2.5"></script>
     <script>
+        // Version Check for Cache Refresh
+        const CURRENT_VERSION = '2.5';
+        const savedVersion = localStorage.getItem('app_version');
+        if (savedVersion !== CURRENT_VERSION) {
+            localStorage.setItem('app_version', CURRENT_VERSION);
+            // If it's a first visit (no version), don't reload. If it's an update, reload.
+            if (savedVersion) {
+                setTimeout(() => { window.location.reload(true); }, 500);
+            }
+        }
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js');
         }
