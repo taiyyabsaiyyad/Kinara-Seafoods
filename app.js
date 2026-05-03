@@ -311,8 +311,8 @@ function renderOrdersHistory() {
                         ${isDineIn ? `<p class="text-[9px] font-black text-green-600 uppercase mt-1">Table ${order.table}</p>` : ''}
                     </div>
                     <div class="flex flex-col gap-2 items-end">
-                        <div class="${order.method === 'ONLINE' ? 'bg-green-100 text-green-700' : isPayAfter ? 'bg-orange-100 text-orange-700' : 'bg-stone-100 text-stone-600'} px-3 py-1 rounded-full border border-current/10 text-[9px] font-black uppercase tracking-tighter">
-                            ${order.method === 'ONLINE' ? 'Paid Online' : isPayAfter ? 'Pay After Meal' : 'COD - Unpaid'}
+                        <div class="${(order.method === 'ONLINE' || order.paid) ? 'bg-green-100 text-green-700' : isPayAfter ? 'bg-orange-100 text-orange-700' : 'bg-stone-100 text-stone-600'} px-3 py-1 rounded-full border border-current/10 text-[9px] font-black uppercase tracking-tighter">
+                            ${(order.method === 'ONLINE' || order.paid) ? 'Bill Paid' : isPayAfter ? 'Pay After Meal' : 'COD - Unpaid'}
                         </div>
                         ${isDeliveryOrder && isDelivered ? `
                         <div class="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest">
@@ -353,7 +353,7 @@ function renderOrdersHistory() {
                 </button>
                 ` : ''}
 
-                ${isPayAfter ? `
+                ${isPayAfter && !order.paid ? `
                 <div id="history-pay-${order.id}" class="mt-4 bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm animate-fade-in">
 
                     <!-- Header -->
@@ -461,6 +461,12 @@ function sharePaymentSS(orderId, amount) {
 
 // Dine-In: customer taps BILL PAID — button turns green → Thank You overlay
 function confirmDineinPaid(orderId) {
+    const idx = orders.findIndex(o => o.id == orderId);
+    if (idx !== -1) {
+        orders[idx].paid = true;
+        localStorage.setItem('kinara_orders', JSON.stringify(orders));
+    }
+
     const btn = document.getElementById(`bill-paid-btn-${orderId}`);
     if (btn) {
         btn.disabled = true;
@@ -468,7 +474,11 @@ function confirmDineinPaid(orderId) {
         btn.classList.add('bg-green-600', 'shadow-green-600/20');
         btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span> Bill Paid \u2713';
     }
-    setTimeout(() => showThankYouOverlay(true), 700);
+    
+    setTimeout(() => {
+        renderOrdersHistory(); // Update list to hide QR card
+        showThankYouOverlay(true);
+    }, 700);
 }
 
 function renderCategories() {
