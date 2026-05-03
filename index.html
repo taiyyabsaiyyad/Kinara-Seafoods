@@ -615,37 +615,46 @@
                     </div>
                 </div>
 
+                <!-- Order Instructions -->
+                <div class="mb-6 px-1">
+                    <div class="flex items-center gap-3 mb-3">
+                        <span class="material-symbols-outlined text-[16px] text-stone-400">edit_note</span>
+                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Cooking Instructions</p>
+                    </div>
+                    <textarea id="order-note" placeholder="Extra spicy? No onions? Add your instructions here..." class="w-full bg-stone-50 border-2 border-stone-100 rounded-2xl p-4 text-[11px] font-bold text-stone-900 outline-none min-h-[70px] resize-none placeholder:text-stone-300 focus:border-primary/20 transition-all"></textarea>
+                </div>
+
                 <!-- Payment Selection -->
                 <div class="space-y-4">
                     <div class="flex items-center gap-3 mb-2">
                         <div class="h-[1px] flex-1 bg-stone-100"></div>
-                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Payment Method</p>
+                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em]">Pay via</p>
                         <div class="h-[1px] flex-1 bg-stone-100"></div>
                     </div>
                     
-                    <div id="payment-modes-container" class="grid grid-cols-2 gap-3">
-                        <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 bg-white border-primary shadow-sm">
-                            <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-900">COD</span>
+                    <div id="payment-modes-container" class="grid grid-cols-2 gap-2">
+                        <button id="pay-method-cod" onclick="setPaymentMethod('COD')" class="flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 transition-all duration-300 bg-white border-primary shadow-sm">
+                            <span class="material-symbols-outlined text-primary text-[18px]">payments</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-stone-900">COD</span>
                         </button>
                         
-                        <button id="pay-method-upi" onclick="setPaymentMethod('UPI')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
-                            <span class="material-symbols-outlined text-stone-400 text-[20px]">smartphone</span>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">UPI Pay</span>
+                        <button id="pay-method-upi" onclick="setPaymentMethod('UPI')" class="flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
+                            <span class="material-symbols-outlined text-stone-400 text-[18px]">smartphone</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">UPI Pay</span>
                         </button>
 
-                        <button id="pay-method-scan" onclick="setPaymentMethod('SCAN')" class="flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
-                            <span class="material-symbols-outlined text-stone-400 text-[20px]">qr_code_2</span>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Scan QR</span>
+                        <button id="pay-method-scan" onclick="setPaymentMethod('SCAN')" class="flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
+                            <span class="material-symbols-outlined text-stone-400 text-[18px]">qr_code_2</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">Scan QR</span>
                         </button>
                         
-                        <button id="pay-method-dine" onclick="setPaymentMethod('DINE_PAY')" class="hidden flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
-                            <span class="material-symbols-outlined text-stone-400 text-[20px]">restaurant_menu</span>
-                            <span class="text-[9px] font-black uppercase tracking-widest text-stone-400">Eat & Pay</span>
+                        <button id="pay-method-dine" onclick="setPaymentMethod('DINE_PAY')" class="hidden flex items-center justify-center gap-3 p-3.5 rounded-xl border-2 transition-all duration-300 border-stone-100 bg-stone-50/50 opacity-60">
+                            <span class="material-symbols-outlined text-stone-400 text-[18px]">restaurant_menu</span>
+                            <span class="text-[10px] font-black uppercase tracking-widest text-stone-400">Eat & Pay</span>
                         </button>
                     </div>
 
-                            <span class="material-symbols-outlined text-primary text-[20px]">payments</span>
+
                             <span class="text-[9px] font-black uppercase tracking-widest text-stone-900">COD</span>
                         </button>
                         

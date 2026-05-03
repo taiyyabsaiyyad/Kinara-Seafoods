@@ -818,11 +818,16 @@ function placeOrder() {
     const orderId = Math.floor(1000 + Math.random() * 9000);
     const date = new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' });
     
-    const newOrder = { id: orderId, date: date, items: [...cart], total: grandTotal, method: paymentMethod, distance: distance, coords: userCoords, mode: orderMode, table: tableNum, tip: tip };
+    const note = document.getElementById('order-note')?.value;
+    const newOrder = { id: orderId, date: date, items: [...cart], total: grandTotal, method: paymentMethod, distance: distance, coords: userCoords, mode: orderMode, table: tableNum, tip: tip, note: note };
     orders.push(newOrder);
     localStorage.setItem('kinara_orders', JSON.stringify(orders));
 
-    let msg = `*NEW ${orderMode === 'DINE_IN' ? 'DINE-IN' : 'DELIVERY'} ORDER - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Status:* ${paymentMethod === 'ONLINE' ? 'PAID ONLINE' : paymentMethod === 'DINE_PAY' ? 'PAY AFTER MEAL' : 'COD'}\n\n*Customer:* ${profile.name}\n*Phone:* ${profile.phone}\n`;
+    let statusText = 'COD';
+    if (paymentMethod === 'UPI' || paymentMethod === 'SCAN') statusText = 'UPI/SCAN PAY';
+    if (paymentMethod === 'DINE_PAY') statusText = 'EAT & PAY (AFTER MEAL)';
+
+    let msg = `*NEW ${orderMode === 'DINE_IN' ? 'DINE-IN' : 'DELIVERY'} ORDER - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Status:* ${statusText}\n\n*Customer:* ${profile.name}\n*Phone:* ${profile.phone}\n`;
     
     if (orderMode === 'DINE_IN') {
         msg += `*TABLE NUMBER:* ${tableNum}\n*Type:* Dine-In (Eat First, Pay Later)\n`;
@@ -830,6 +835,8 @@ function placeOrder() {
         msg += `*Address:* ${profile.address}\n`;
         if (profile.coords) msg += `*Location:* https://www.google.com/maps?q=${profile.coords.lat},${profile.coords.lng}\n*Distance:* ${distance.toFixed(1)} KM\n`;
     }
+
+    if (note) msg += `\n*SPECIAL NOTE:* ${note}\n`;
     
     msg += `\n*ITEMS:*\n`;
     cart.forEach(item => { msg += `• ${item.name} x ${item.qty} = ₹${getPrice(item.price) * item.qty}\n`; });
@@ -852,8 +859,10 @@ function placeOrder() {
         // Reset selections
         const tableInput = document.getElementById('table-number');
         const resTableInput = document.getElementById('res-selected-table');
+        const noteInput = document.getElementById('order-note');
         if (tableInput) tableInput.value = '';
         if (resTableInput) resTableInput.value = '[]';
+        if (noteInput) noteInput.value = '';
         
         // Reset order mode to default
         updateOrderMode('DELIVERY');
