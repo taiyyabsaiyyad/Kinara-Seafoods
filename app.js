@@ -989,12 +989,13 @@ function renderTableGrids() {
         if (!grid) return;
         
         const selectedTable = document.getElementById('table-number')?.value;
-        const resSelectedTable = document.getElementById('res-selected-table')?.value;
+        const resSelectedValue = document.getElementById('res-selected-table')?.value || '[]';
+        const resSelectedTables = resSelectedValue.startsWith('[') ? JSON.parse(resSelectedValue) : [resSelectedValue];
         
         let html = '';
         for (let i = 1; i <= TOTAL_TABLES; i++) {
             const isOccupied = occupiedTables.has(i);
-            const isSelected = type === 'res' ? (resSelectedTable == i) : (selectedTable == i);
+            const isSelected = type === 'res' ? resSelectedTables.includes(i) : (selectedTable == i);
             
             if (type === 'cart' || type === 'res') {
                 const clickFn = type === 'res' ? `selectResTable(${i})` : `selectTable(${i})`;
@@ -1053,12 +1054,15 @@ function renderTableGrids() {
 }
 
 let resGuests = 2;
+let requiredTables = 1;
 
 function openReservation() {
     document.getElementById('reservation-modal').classList.add('open');
     const now = new Date();
     document.getElementById('res-date').value = now.toISOString().split('T')[0];
     document.getElementById('res-time').value = now.toTimeString().slice(0, 5);
+    const tableField = document.getElementById('res-selected-table');
+    if (tableField) tableField.value = "[]";
     setResGuests(2);
     renderTableGrids();
 }
@@ -1069,30 +1073,53 @@ function closeReservation() {
 
 function setResGuests(num) {
     resGuests = num;
+    requiredTables = Math.ceil(num / 4);
+    
     document.querySelectorAll('.res-guest-btn').forEach(btn => {
-        const isActive = btn.textContent.includes(num);
+        const btnNum = parseInt(btn.textContent);
+        const isActive = (num >= 10 && btn.textContent.includes('10')) || (btnNum === num);
         btn.classList.toggle('bg-primary', isActive);
         btn.classList.toggle('text-white', isActive);
         btn.classList.toggle('border-primary', isActive);
         btn.classList.toggle('text-stone-600', !isActive);
         btn.classList.toggle('border-stone-100', !isActive);
     });
+    
+    showToast(`${requiredTables} Table(s) required for ${num} guests`);
+    renderTableGrids();
 }
 
 function selectResTable(num) {
-    document.getElementById('res-selected-table').value = num;
+    const tableField = document.getElementById('res-selected-table');
+    let selected = JSON.parse(tableField.value || '[]');
+    
+    if (selected.includes(num)) {
+        selected = selected.filter(n => n !== num);
+    } else {
+        if (selected.length < requiredTables) {
+            selected.push(num);
+        } else {
+            selected.shift();
+            selected.push(num);
+        }
+    }
+    
+    tableField.value = JSON.stringify(selected);
     renderTableGrids();
 }
 
 function submitReservation() {
     const date = document.getElementById('res-date').value;
     const time = document.getElementById('res-time').value;
-    const table = document.getElementById('res-selected-table').value;
+    const tables = JSON.parse(document.getElementById('res-selected-table').value || '[]');
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
     
-    if (!table) { showToast("Please select a table"); return; }
+    if (tables.length < requiredTables) { 
+        showToast(`Please select ${requiredTables} table(s)`); 
+        return; 
+    }
     
-    const msg = `*TABLE RESERVATION - KINARA SEA FOOD*\n\n*Name:* ${profile.name || '---'}\n*Phone:* ${profile.phone || '---'}\n*Date:* ${date}\n*Time:* ${time}\n*Guests:* ${resGuests}\n*Table:* ${table}\n\n_Please confirm my reservation._`;
+    const msg = `*TABLE RESERVATION - KINARA SEA FOOD*\n\n*Name:* ${profile.name || '---'}\n*Phone:* ${profile.phone || '---'}\n*Date:* ${date}\n*Time:* ${time}\n*Guests:* ${resGuests}\n*Tables:* ${tables.join(', ')}\n\n_Please confirm my reservation for ${requiredTables} table(s)._`;
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     closeReservation();
 }
