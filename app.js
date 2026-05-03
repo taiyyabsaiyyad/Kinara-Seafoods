@@ -186,13 +186,12 @@ function toggleVegOnly() {
 function setPaymentMethod(method) {
     paymentMethod = method;
     const codBtn = document.getElementById('pay-method-cod');
-    const onlineBtn = document.getElementById('pay-method-online');
+    const upiBtn = document.getElementById('pay-method-upi');
     const dineBtn = document.getElementById('pay-method-dine');
-    const paymentSection = document.getElementById('payment-section');
     const placeBtn = document.getElementById('place-order-btn');
 
     // Reset all
-    [codBtn, onlineBtn, dineBtn].forEach(btn => {
+    [codBtn, upiBtn, dineBtn].forEach(btn => {
         if (!btn) return;
         btn.classList.remove('border-primary', 'bg-white', 'shadow-sm');
         btn.classList.add('border-stone-100', 'bg-stone-50/50');
@@ -202,7 +201,7 @@ function setPaymentMethod(method) {
         if (label) label.classList.replace('text-stone-900', 'text-stone-400');
     });
 
-    const activeBtn = method === 'COD' ? codBtn : method === 'DINE_PAY' ? dineBtn : onlineBtn;
+    const activeBtn = method === 'COD' ? codBtn : method === 'DINE_PAY' ? dineBtn : upiBtn;
     if (activeBtn) {
         activeBtn.classList.add('border-primary', 'bg-white', 'shadow-sm');
         activeBtn.classList.remove('border-stone-100', 'bg-stone-50/50');
@@ -212,24 +211,14 @@ function setPaymentMethod(method) {
         if (label) label.classList.replace('text-stone-400', 'text-stone-900');
     }
 
-    if (method === 'ONLINE') {
-        const { grandTotal } = calculateCartTotals();
-        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${grandTotal}&cu=INR&tn=KinaraOrder`;
-        document.getElementById('upi-qr').src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUrl)}`;
-        paymentSection.classList.remove('hidden');
-        placeBtn.classList.add('hidden');
-        
-        isSSShared = false;
-        const ssBtn = document.getElementById('ss-toggle-btn');
-        const finalBtn = document.getElementById('final-confirm-btn');
-        if(ssBtn) {
-            ssBtn.classList.remove('bg-green-600', 'text-white');
-            ssBtn.textContent = 'I have shared the SS';
+    if (placeBtn) {
+        if (method === 'UPI') {
+            placeBtn.innerHTML = `<span class="material-symbols-outlined text-[18px]">smartphone</span> PAY & PLACE ORDER`;
+            placeBtn.classList.replace('bg-stone-900', 'bg-primary');
+        } else {
+            placeBtn.innerHTML = `PLACE ORDER`;
+            placeBtn.classList.replace('bg-primary', 'bg-stone-900');
         }
-        if(finalBtn) finalBtn.classList.add('hidden');
-    } else {
-        paymentSection.classList.add('hidden');
-        placeBtn.classList.remove('hidden');
     }
 }
 
@@ -834,13 +823,19 @@ function placeOrder() {
     if (tip > 0) msg += `*Staff Tip ❤️:* ₹${tip}\n`;
     msg += `*GRAND TOTAL: ₹${grandTotal}*`;
     
+    if (paymentMethod === 'UPI') {
+        initiateUPIPayment(grandTotal, orderId);
+    }
+    
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     setTimeout(() => {
         cart = []; updateCart(); closeCart();
-        if (orderMode === 'DELIVERY') openTracking(orderId);
-        else showToast("Order sent to kitchen!");
-    }, 1000);
+        switchTab('orders');
+        renderOrdersHistory();
+        renderTableGrids();
+        if (paymentMethod === 'UPI') showToast("Complete payment, then click BILL PAID.");
+    }, 1500);
 }
 
 function openTracking(orderId) {
@@ -1168,3 +1163,16 @@ function confirmOnlineOrder() {
 
 function closeStatus() {}
 function confirmOnlinePayment() {}
+
+function initiateUPIPayment(amount, orderId) {
+    const upiId = "taiyyabsaiyyad@oksbi"; 
+    const upiName = "Kinara Seafoods";
+    const note = `Order #${orderId}`;
+    const upiUrl = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(upiName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}`;
+    
+    const link = document.createElement('a');
+    link.href = upiUrl;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
