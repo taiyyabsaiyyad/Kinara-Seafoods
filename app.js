@@ -113,24 +113,22 @@ function setOrderMode(mode) {
     orderMode = mode;
     const delBtn = document.getElementById('mode-delivery');
     const dineBtn = document.getElementById('mode-dinein');
-    const dineStatus = document.getElementById('dine-in-status');
     const dineFields = document.getElementById('dine-in-fields');
     const dinePayBtn = document.getElementById('pay-method-dine');
     const codBtn = document.getElementById('pay-method-cod');
+    const homeSeating = document.getElementById('home-seating-container');
 
     if (mode === 'DELIVERY') {
         delBtn.classList.add('bg-white', 'shadow-sm', 'text-primary');
         delBtn.classList.remove('text-stone-400');
         dineBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
         dineBtn.classList.add('text-stone-400');
-        dineStatus.classList.add('hidden');
+        
+        if (homeSeating) homeSeating.classList.add('hidden');
         dineFields.classList.add('hidden');
         
         dinePayBtn.classList.add('hidden');
         codBtn.classList.remove('hidden');
-        
-        // Adjust grid for 2 columns
-        document.getElementById('payment-modes-container').classList.replace('grid-cols-2', 'grid-cols-2'); // No change needed if always 2
         
         setPaymentMethod('COD');
     } else {
@@ -138,13 +136,15 @@ function setOrderMode(mode) {
         dineBtn.classList.remove('text-stone-400');
         delBtn.classList.remove('bg-white', 'shadow-sm', 'text-primary');
         delBtn.classList.add('text-stone-400');
-        dineStatus.classList.remove('hidden');
+        
+        if (homeSeating) homeSeating.classList.remove('hidden');
         dineFields.classList.remove('hidden');
         
         dinePayBtn.classList.remove('hidden');
         codBtn.classList.add('hidden');
         
         setPaymentMethod('DINE_PAY');
+        renderTableGrids();
     }
     updateCart();
 }
@@ -797,7 +797,10 @@ function renderCartItems() {
     `).join('');
 }
 
-function openCart() { document.getElementById('cart-modal').classList.add('open'); }
+function openCart() { 
+    document.getElementById('cart-modal').classList.add('open'); 
+    renderTableGrids();
+}
 function closeCart() { document.getElementById('cart-modal').classList.remove('open'); }
 
 function placeOrder() {
@@ -905,7 +908,10 @@ function closeTracking() {
     document.getElementById('tracking-modal').classList.remove('open');
 }
 
-function openProfile() { document.getElementById('profile-modal').classList.add('open'); }
+function openProfile() { 
+    document.getElementById('profile-modal').classList.add('open'); 
+    renderTableGrids();
+}
 function closeProfile() { document.getElementById('profile-modal').classList.remove('open'); }
 
 function detectLocation() {
@@ -946,6 +952,131 @@ function showToast(text) {
     const toast = document.getElementById('toast'); if(!toast) return;
     toast.textContent = text; toast.style.opacity = '1'; toast.style.transform = 'translate(-50%, -20px)';
     setTimeout(() => { toast.style.opacity = '0'; toast.style.transform = 'translate(-50%, 0)'; }, 3000);
+}
+
+function confirmDineinPaid(orderId) {
+    const orderIndex = orders.findIndex(o => o.id == orderId);
+    if (orderIndex === -1) return;
+    
+    orders[orderIndex].paid = true;
+    localStorage.setItem('kinara_orders', JSON.stringify(orders));
+    
+    showToast("Bill marked as paid! Table released.");
+    renderOrdersHistory();
+    renderTableGrids(); // Refresh seating
+    
+    // Redirect after a short delay
+    setTimeout(() => {
+        closeTracking();
+        switchTab('home');
+    }, 2000);
+}
+
+// Table Management Logic
+const TOTAL_TABLES = 12;
+
+function renderTableGrids() {
+    const ordersData = JSON.parse(localStorage.getItem('kinara_orders') || '[]');
+    const occupiedTables = new Set();
+    ordersData.forEach(o => {
+        if (o.mode === 'DINE_IN' && !o.paid && o.table) {
+            occupiedTables.add(parseInt(o.table));
+        }
+    });
+
+    const updateGrid = (gridId, isCart) => {
+        const grid = document.getElementById(gridId);
+        if (!grid) return;
+        
+        const selectedTable = document.getElementById('table-number')?.value;
+        
+        let html = '';
+        for (let i = 1; i <= TOTAL_TABLES; i++) {
+            const isOccupied = occupiedTables.has(i);
+            const isSelected = selectedTable == i;
+            
+            if (isCart) {
+                html += `
+                    <button onclick="${isOccupied ? '' : `selectTable(${i})`}" 
+                        class="h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all border-2
+                        ${isOccupied ? 'bg-red-50 border-red-100 text-red-400 opacity-50 cursor-not-allowed' : 
+                          isSelected ? 'bg-primary border-primary text-white shadow-lg' : 
+                          'bg-white border-stone-100 text-stone-600 active:scale-95'}">
+                        ${i < 10 ? '0' + i : i}
+                    </button>
+                `;
+            } else {
+                html += `
+                    <div class="h-12 rounded-2xl flex flex-col items-center justify-center gap-1 border transition-all duration-500
+                        ${isOccupied ? 'bg-red-50 border-red-100 shadow-inner' : 'bg-white border-stone-100 shadow-sm'}">
+                        <span class="text-[9px] font-black ${isOccupied ? 'text-red-500' : 'text-stone-900'}">${i < 10 ? '0' + i : i}</span>
+                        <div class="w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 shadow-[0_0_8px_#ef4444] pulse-red' : 'bg-green-500 shadow-[0_0_8px_#22c55e]'}"></div>
+                    </div>
+                `;
+            }
+        }
+        grid.innerHTML = html;
+    };
+
+    updateGrid('table-grid', false);
+    updateGrid('cart-table-grid', true);
+    updateGrid('home-table-grid', false); // Update home map
+    
+    const availableCount = TOTAL_TABLES - occupiedTables.size;
+    const badge = document.getElementById('tables-available-badge');
+    const countText = document.getElementById('tables-available-count');
+    const homeCountText = document.getElementById('home-available-count');
+    
+    if (countText) countText.textContent = `${availableCount} Available`;
+    if (homeCountText) homeCountText.textContent = `${availableCount} Free`;
+    
+    if (badge) {
+        if (availableCount > 0) {
+            badge.classList.remove('bg-red-50', 'border-red-100', 'text-red-700');
+            badge.classList.add('bg-green-50', 'border-green-100', 'text-green-700');
+        } else {
+            badge.classList.remove('bg-green-50', 'border-green-100', 'text-green-700');
+            badge.classList.add('bg-red-50', 'border-red-100', 'text-red-700');
+        }
+    }
+}
+
+function selectTable(num) {
+    const input = document.getElementById('table-number');
+    if (input) {
+        input.value = num;
+        renderTableGrids();
+    }
+}
+
+function requestTableBooking() {
+    const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
+    const msg = `*TABLE BOOKING REQUEST - KINARA SEA FOOD*\n\n*Name:* ${profile.name || '---'}\n*Phone:* ${profile.phone || '---'}\n*Request:* I would like to book a table for today. Please confirm availability.\n\n_Sent via Kinara App_`;
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// Initial calls
+window.addEventListener('DOMContentLoaded', () => {
+    loadProfile();
+    renderCategories();
+    renderMenu();
+    updateCart();
+    startLiveStatusTracker();
+    renderTableGrids();
+});
+
+function confirmOnlineOrder() {
+    // This handles the "Thank You" logic after online payment
+    const lastOrder = orders[orders.length - 1];
+    if (lastOrder) {
+        lastOrder.paid = true;
+        localStorage.setItem('kinara_orders', JSON.stringify(orders));
+    }
+    showToast("Payment Confirmed! Thank you.");
+    renderTableGrids();
+    setTimeout(() => {
+        switchTab('home');
+    }, 2000);
 }
 
 function closeStatus() {}

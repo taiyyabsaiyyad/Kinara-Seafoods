@@ -201,6 +201,15 @@
             from { opacity: 0; }
             to { opacity: 1; }
         }
+        .pulse-red {
+            animation: pulse-red 2s infinite;
+        }
+        @keyframes pulse-red {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+
         .animate-fade-in { animation: fadeIn 0.5s ease forwards; }
     </style>
 </head>
@@ -292,6 +301,45 @@
                 <span class="material-symbols-outlined text-[18px]">restaurant</span>
                 Dine-In
             </button>
+        </div>
+    </div>
+
+    <!-- Live Seating Map (Shows on Home when Dine-In active) -->
+    <div id="home-seating-container" class="hidden animate-fade-in mt-6">
+        <div class="glass-card p-5 rounded-[28px] border border-stone-100 bg-gradient-to-br from-white to-stone-50/50">
+            <div class="flex justify-between items-center mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-primary/5 rounded-xl flex items-center justify-center text-primary">
+                        <span class="material-symbols-outlined text-[20px]">restaurant</span>
+                    </div>
+                    <div>
+                        <h4 class="text-xs font-black text-stone-900 uppercase tracking-widest">Live Seating</h4>
+                        <p class="text-[9px] font-bold text-stone-400 uppercase tracking-tight mt-0.5">Real-time availability</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    <span id="home-available-count" class="text-[9px] font-black text-green-700 uppercase tracking-tighter">12 Free</span>
+                </div>
+            </div>
+            
+            <div id="home-table-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3">
+                <!-- Tables 1-12 injected by JS -->
+            </div>
+
+            <div class="mt-5 pt-4 border-t border-stone-50 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#22c55e]"></div>
+                        <span class="text-[8px] font-black text-stone-400 uppercase">Available</span>
+                    </div>
+                    <div class="flex items-center gap-1.5">
+                        <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444] animate-pulse"></div>
+                        <span class="text-[8px] font-black text-stone-400 uppercase">Booked</span>
+                    </div>
+                </div>
+                <button onclick="openCart(); setOrderMode('DINE_IN')" class="text-[9px] font-black text-primary uppercase tracking-widest border-b border-primary/20 pb-0.5">Book Table Now</button>
+            </div>
         </div>
     </div>
 
@@ -499,13 +547,16 @@
                 <!-- Empty state will be injected here by JS if needed -->
             </div>
 
-            <!-- Table Number Section (Dine-In Only) -->
-            <div id="dine-in-fields" class="hidden mb-10 space-y-4 animate-slide-up">
-                <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest text-center">Your Table Details</p>
-                <div class="relative">
-                    <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-stone-400 text-lg">restaurant</span>
-                    <input id="table-number" type="number" placeholder="Enter Table Number (e.g. 05)" class="w-full bg-stone-50 border-stone-100 rounded-2xl py-4 pl-12 pr-4 text-sm focus:ring-2 focus:ring-primary/20 transition-all outline-none">
+            <!-- Table Selection Section (Dine-In Only) -->
+            <div id="dine-in-fields" class="hidden mb-10 space-y-5 animate-slide-up">
+                <div class="flex justify-between items-center px-1">
+                    <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest">Select Your Table</p>
+                    <p class="text-[9px] font-bold text-primary animate-pulse uppercase">Live Seating</p>
                 </div>
+                <div id="cart-table-grid" class="grid grid-cols-6 gap-2 bg-stone-50 p-4 rounded-[28px] border border-stone-100">
+                    <!-- Injected by JS -->
+                </div>
+                <input id="table-number" type="hidden"> <!-- Keeping ID for logic consistency -->
             </div>
             
             <div id="cart-footer" class="space-y-8 hidden">
@@ -631,6 +682,29 @@
                 <span class="material-symbols-outlined text-[20px]">close</span>
             </button>
         </div>
+
+        <!-- Live Seating Widget -->
+        <div class="glass-card p-6 rounded-[28px] border border-stone-100 mb-6 bg-gradient-to-br from-white to-stone-50/50">
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h4 class="text-xs font-black text-stone-900 uppercase tracking-widest">Live Seating</h4>
+                    <p class="text-[9px] font-bold text-stone-400 uppercase tracking-tight mt-1">Real-time table status</p>
+                </div>
+                <div id="tables-available-badge" class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
+                    <span id="tables-available-count" class="text-[9px] font-black text-green-700 uppercase">12 Available</span>
+                </div>
+            </div>
+            
+            <div id="table-grid" class="grid grid-cols-4 gap-3">
+                <!-- Injected by JS -->
+            </div>
+
+            <button onclick="requestTableBooking()" class="w-full mt-6 bg-white border border-stone-100 text-stone-600 py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all">
+                <span class="material-symbols-outlined text-[18px]">whatsapp</span> Book via WhatsApp
+            </button>
+        </div>
+
         <div class="space-y-4">
             <input id="prof-name" type="text" placeholder="Your Name" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
             <input id="prof-email" type="email" placeholder="Email Address" class="w-full bg-stone-50 border-stone-100 rounded-xl px-4 py-3 text-sm focus:ring-primary">
