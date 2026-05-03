@@ -56,6 +56,11 @@ function init() {
     window.detectLocation = detectLocation;
     window.openTracking = openTracking;
     window.closeTracking = closeTracking;
+    window.markDelivered = markDelivered;
+    window.openGoogleReview = openGoogleReview;
+    window.closeDeliveredOverlay = closeDeliveredOverlay;
+    window.sharePaymentSS = sharePaymentSS;
+    window.confirmDineinPaid = confirmDineinPaid;
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -294,6 +299,8 @@ function renderOrdersHistory() {
     list.innerHTML = [...orders].reverse().map(order => {
         const isDineIn = order.mode === 'DINE_IN';
         const isPayAfter = order.method === 'DINE_PAY';
+        const isDeliveryOrder = !isDineIn;
+        const isDelivered = order.delivered === true;
         
         return `
             <div class="bg-stone-50 rounded-[28px] p-5 border border-stone-100 mb-4 animate-slide-up">
@@ -307,7 +314,12 @@ function renderOrdersHistory() {
                         <div class="${order.method === 'ONLINE' ? 'bg-green-100 text-green-700' : isPayAfter ? 'bg-orange-100 text-orange-700' : 'bg-stone-100 text-stone-600'} px-3 py-1 rounded-full border border-current/10 text-[9px] font-black uppercase tracking-tighter">
                             ${order.method === 'ONLINE' ? 'Paid Online' : isPayAfter ? 'Pay After Meal' : 'COD - Unpaid'}
                         </div>
-                        ${!isDineIn ? `
+                        ${isDeliveryOrder && isDelivered ? `
+                        <div class="flex items-center gap-1 text-[9px] font-black text-green-600 uppercase tracking-widest">
+                            <span class="material-symbols-outlined text-[14px]">check_circle</span> Delivered
+                        </div>
+                        ` : ''}
+                        ${isDeliveryOrder && !isDelivered ? `
                         <button onclick="openTracking('${order.id}')" class="flex items-center gap-1 text-[9px] font-black text-primary uppercase tracking-widest mt-1">
                             <span class="material-symbols-outlined text-[14px]">my_location</span> Track Map
                         </button>
@@ -319,42 +331,69 @@ function renderOrdersHistory() {
                     ${order.items.map(i => `
                         <div class="flex justify-between text-[10px] font-bold text-stone-600">
                             <span>${i.name} <span class="text-stone-300">x${i.qty}</span></span>
-                            <span>₹${getPrice(i.price) * i.qty}</span>
+                            <span>\u20b9${getPrice(i.price) * i.qty}</span>
                         </div>
                     `).join('')}
                     ${order.tip > 0 ? `
                         <div class="flex justify-between text-[10px] font-bold text-green-600">
-                            <span>Staff Tip ❤️</span>
-                            <span>₹${order.tip}</span>
+                            <span>Staff Tip \u2764\ufe0f</span>
+                            <span>\u20b9${order.tip}</span>
                         </div>
                     ` : ''}
                     <div class="flex justify-between pt-2 border-t border-stone-100 items-center">
                         <span class="text-[10px] font-black text-stone-900 uppercase">Total Bill</span>
-                        <span class="text-sm font-black text-primary">₹${order.total}</span>
+                        <span class="text-sm font-black text-primary">\u20b9${order.total}</span>
                     </div>
                 </div>
 
+                ${isDeliveryOrder && !isDelivered ? `
+                <button onclick="markDelivered('${order.id}')" class="w-full mt-2 bg-green-600 text-white py-3.5 rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] flex justify-center items-center gap-2 active:scale-95 transition-all shadow-lg shadow-green-600/20">
+                    <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                    I Received My Order
+                </button>
+                ` : ''}
+
                 ${isPayAfter ? `
-                <div id="history-pay-${order.id}" class="mt-4 p-4 bg-white rounded-2xl border border-orange-100 shadow-sm animate-fade-in">
-                    <div class="flex items-center gap-3 mb-4">
-                        <div class="w-10 h-10 bg-orange-50 rounded-xl flex items-center justify-center text-orange-600">
-                            <span class="material-symbols-outlined">qr_code_2</span>
+                <div id="history-pay-${order.id}" class="mt-4 bg-white rounded-2xl border border-stone-100 overflow-hidden shadow-sm animate-fade-in">
+
+                    <!-- Header -->
+                    <div class="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-stone-50">
+                        <div class="w-9 h-9 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500 flex-shrink-0">
+                            <span class="material-symbols-outlined text-[20px]">qr_code_2</span>
                         </div>
                         <div>
-                            <p class="text-[10px] font-black text-stone-900 uppercase tracking-widest">Settle Bill Now</p>
-                            <p class="text-[9px] font-bold text-stone-400">Scan to pay ₹${order.total}</p>
+                            <p class="text-[10px] font-black text-stone-900 uppercase tracking-widest">Settle Bill</p>
+                            <p class="text-[9px] font-bold text-stone-400">\u20b9${order.total} &middot; Table ${order.table || '-'}</p>
                         </div>
                     </div>
-                    
-                    <div class="flex flex-col items-center gap-4">
-                        <div class="bg-stone-50 p-3 rounded-2xl border border-stone-100 w-full max-w-[160px]">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${order.total}&cu=INR&tn=KinaraOrder_${order.id}`)}" class="w-full aspect-square mix-blend-multiply opacity-80" alt="Payment QR">
+
+                    <!-- Instruction Steps -->
+                    <div class="px-4 pt-3 pb-1">
+                        <p class="text-[9px] font-black text-stone-400 uppercase tracking-[0.2em] text-center">
+                            1&nbsp; Scan &amp; Pay &nbsp;&bull;&nbsp; 2&nbsp; Share SS on WhatsApp &nbsp;&bull;&nbsp; 3&nbsp; Tap Bill Paid
+                        </p>
+                    </div>
+
+                    <!-- QR Code -->
+                    <div class="flex justify-center px-4 py-3">
+                        <div class="bg-stone-50 p-3 rounded-2xl border border-stone-100 inline-block">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(`upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${order.total}&cu=INR&tn=KinaraOrder_${order.id}`)}" class="w-36 h-36 mix-blend-multiply opacity-90 block" alt="Payment QR">
                         </div>
-                        
-                        <div class="w-full space-y-2">
-                            <button onclick="sharePaymentSS('${order.id}', ${order.total})" class="w-full bg-stone-900 text-white py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all">Share Payment SS</button>
-                            <p class="text-[8px] text-stone-400 text-center font-bold">Please share screenshot on WhatsApp after payment</p>
-                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="px-4 pb-4 space-y-2">
+                        <!-- Secondary: Share Screenshot -->
+                        <button onclick="sharePaymentSS('${order.id}', ${order.total})" class="w-full border border-stone-200 bg-stone-50 text-stone-600 py-3 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all flex items-center justify-center gap-2">
+                            <svg class="w-3.5 h-3.5 fill-current text-green-600" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+                            Share Screenshot on WhatsApp
+                        </button>
+
+                        <!-- Primary: BILL PAID -->
+                        <button id="bill-paid-btn-${order.id}" onclick="confirmDineinPaid('${order.id}')" class="w-full bg-stone-900 text-white py-4 rounded-2xl font-black text-[11px] uppercase tracking-[0.25em] flex items-center justify-center gap-2 active:scale-95 transition-all duration-300 shadow-lg">
+                            <span class="material-symbols-outlined text-[20px]">payments</span>
+                            Bill Paid
+                        </button>
                     </div>
                 </div>
                 ` : ''}
@@ -363,10 +402,73 @@ function renderOrdersHistory() {
     }).join('');
 }
 
+// Mark delivery order as received — shows celebration + review prompt
+function markDelivered(orderId) {
+    const idx = orders.findIndex(o => o.id == orderId);
+    if (idx === -1) return;
+    orders[idx].delivered = true;
+    localStorage.setItem('kinara_orders', JSON.stringify(orders));
+    renderOrdersHistory();
+    closeOrders();
+    showThankYouOverlay(false); // delivery context
+}
+
+function openGoogleReview() {
+    window.open(GOOGLE_REVIEW_URL, '_blank');
+    closeDeliveredOverlay();
+}
+
+function closeDeliveredOverlay() {
+    const overlay = document.getElementById('delivered-overlay');
+    if (overlay) {
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+    }
+    // Always go back to home after Thank You screen
+    setTimeout(() => switchTab('home'), 300);
+}
+
+// Shared Thank You overlay — works for both delivery (isDineIn=false) and dine-in (isDineIn=true)
+function showThankYouOverlay(isDineIn) {
+    const overlay = document.getElementById('delivered-overlay');
+    if (!overlay) return;
+
+    // Dynamically update heading & subtitle based on context
+    const heading = overlay.querySelector('#overlay-heading');
+    const subtitle = overlay.querySelector('#overlay-subtitle');
+    const icon = overlay.querySelector('#overlay-icon');
+
+    if (isDineIn) {
+        if (heading)  heading.textContent = 'Thanks for Dining! \uD83D\uDE4F';
+        if (subtitle) subtitle.textContent = 'Hope you loved your Malvani feast!';
+        if (icon)     icon.textContent = 'restaurant';
+    } else {
+        if (heading)  heading.textContent = 'Order Delivered! \uD83C\uDF89';
+        if (subtitle) subtitle.textContent = 'Thank you for choosing Kinara Seafood';
+        if (icon)     icon.textContent = 'verified';
+    }
+
+    overlay.style.opacity = '1';
+    overlay.style.pointerEvents = 'auto';
+}
+
 function sharePaymentSS(orderId, amount) {
     const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
-    let msg = `*PAYMENT VERIFICATION (DINE-IN) - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Amount:* ₹${amount}\n\n*Customer:* ${profile.name}\n\n_I have just paid the bill for my dine-in order. Sharing the screenshot below..._`;
+    let msg = `*PAYMENT VERIFICATION (DINE-IN) - KINARA SEA FOOD*\n*Order ID:* #${orderId}\n*Amount:* \u20b9${amount}\n\n*Customer:* ${profile.name}\n\n_I have just paid the bill for my dine-in order. Sharing the screenshot below..._`;
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    // No auto overlay — user confirms manually via BILL PAID button
+}
+
+// Dine-In: customer taps BILL PAID — button turns green → Thank You overlay
+function confirmDineinPaid(orderId) {
+    const btn = document.getElementById(`bill-paid-btn-${orderId}`);
+    if (btn) {
+        btn.disabled = true;
+        btn.classList.remove('bg-stone-900', 'shadow-lg');
+        btn.classList.add('bg-green-600', 'shadow-green-600/20');
+        btn.innerHTML = '<span class="material-symbols-outlined text-[20px]">check_circle</span> Bill Paid \u2713';
+    }
+    setTimeout(() => showThankYouOverlay(true), 700);
 }
 
 function renderCategories() {
@@ -677,6 +779,19 @@ function openTracking(orderId) {
     document.getElementById('tracking-modal').classList.add('open');
     document.getElementById('track-dist').textContent = `${(order.distance || 0).toFixed(1)} KM`;
     document.getElementById('track-eta').textContent = `${Math.ceil((order.distance || 0) * 5 + 15)} Mins`;
+
+    // Doorstep QR: show only for COD delivery orders
+    const qrSection = document.getElementById('doorstep-qr-section');
+    const qrImg = document.getElementById('doorstep-qr-img');
+    const qrAmt = document.getElementById('doorstep-qr-amount');
+    if (qrSection && order.method === 'COD') {
+        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${order.total}&cu=INR&tn=KinaraOrder_${order.id}`;
+        qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiUrl)}`;
+        qrAmt.textContent = `\u20b9${order.total}`;
+        qrSection.classList.remove('hidden');
+    } else if (qrSection) {
+        qrSection.classList.add('hidden');
+    }
     
     // Init Map with Cinematic Style
     setTimeout(() => {
