@@ -185,30 +185,45 @@ function toggleVegOnly() {
 
 function setPaymentMethod(method) {
     paymentMethod = method;
-    const codBtn = document.getElementById('pay-method-cod');
-    const upiBtn = document.getElementById('pay-method-upi');
-    const dineBtn = document.getElementById('pay-method-dine');
+    const scanBtn = document.getElementById('pay-method-scan');
     const placeBtn = document.getElementById('place-order-btn');
+    const paymentSection = document.getElementById('payment-section');
 
     // Reset all
-    [codBtn, upiBtn, dineBtn].forEach(btn => {
+    [codBtn, upiBtn, dineBtn, scanBtn].forEach(btn => {
         if (!btn) return;
-        btn.classList.remove('border-primary', 'bg-white', 'shadow-sm');
-        btn.classList.add('border-stone-100', 'bg-stone-50/50');
+        btn.classList.remove('border-primary', 'bg-white', 'shadow-sm', 'opacity-100');
+        btn.classList.add('border-stone-100', 'bg-stone-50/50', 'opacity-60');
         const icon = btn.querySelector('.material-symbols-outlined');
         const label = btn.querySelector('span:not(.material-symbols-outlined)');
-        if (icon) icon.classList.replace('text-primary', 'text-stone-400');
-        if (label) label.classList.replace('text-stone-900', 'text-stone-400');
+        if (icon) { icon.classList.remove('text-primary'); icon.classList.add('text-stone-400'); }
+        if (label) { label.classList.remove('text-stone-900'); label.classList.add('text-stone-400'); }
     });
 
-    const activeBtn = method === 'COD' ? codBtn : method === 'DINE_PAY' ? dineBtn : upiBtn;
+    const activeBtn = method === 'COD' ? codBtn : 
+                      method === 'DINE_PAY' ? dineBtn : 
+                      method === 'UPI' ? upiBtn : scanBtn;
+
     if (activeBtn) {
-        activeBtn.classList.add('border-primary', 'bg-white', 'shadow-sm');
-        activeBtn.classList.remove('border-stone-100', 'bg-stone-50/50');
+        activeBtn.classList.add('border-primary', 'bg-white', 'shadow-sm', 'opacity-100');
+        activeBtn.classList.remove('border-stone-100', 'bg-stone-50/50', 'opacity-60');
         const icon = activeBtn.querySelector('.material-symbols-outlined');
         const label = activeBtn.querySelector('span:not(.material-symbols-outlined)');
-        if (icon) icon.classList.replace('text-stone-400', 'text-primary');
-        if (label) label.classList.replace('text-stone-400', 'text-stone-900');
+        if (icon) { icon.classList.remove('text-stone-400'); icon.classList.add('text-primary'); }
+        if (label) { label.classList.remove('text-stone-400'); label.classList.add('text-stone-900'); }
+    }
+
+    // Handle Special Sections
+    if (method === 'SCAN') {
+        const { grandTotal } = calculateCartTotals();
+        const upiUrl = `upi://pay?pa=${UPI_ID}&pn=${encodeURIComponent(UPI_NAME)}&am=${grandTotal}&cu=INR&tn=KinaraOrder`;
+        const qrImg = document.getElementById('upi-qr');
+        if (qrImg) qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent(upiUrl)}`;
+        if (paymentSection) paymentSection.classList.remove('hidden');
+        if (placeBtn) placeBtn.classList.add('hidden');
+    } else {
+        if (paymentSection) paymentSection.classList.add('hidden');
+        if (placeBtn) placeBtn.classList.remove('hidden');
     }
 
     if (placeBtn) {
@@ -830,11 +845,25 @@ function placeOrder() {
     window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
     
     setTimeout(() => {
-        cart = []; updateCart(); closeCart();
+        cart = []; 
+        updateCart(); 
+        closeCart();
+        
+        // Reset selections
+        const tableInput = document.getElementById('table-number');
+        const resTableInput = document.getElementById('res-selected-table');
+        if (tableInput) tableInput.value = '';
+        if (resTableInput) resTableInput.value = '[]';
+        
+        // Reset order mode to default
+        updateOrderMode('DELIVERY');
+        
         switchTab('orders');
         renderOrdersHistory();
         renderTableGrids();
+        
         if (paymentMethod === 'UPI') showToast("Complete payment, then click BILL PAID.");
+        if (paymentMethod === 'SCAN') showToast("Order sent! Complete scan payment now.");
     }, 1500);
 }
 
