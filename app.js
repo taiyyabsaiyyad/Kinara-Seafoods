@@ -989,17 +989,19 @@ function renderTableGrids() {
         if (!grid) return;
         
         const selectedTable = document.getElementById('table-number')?.value;
+        const resSelectedTable = document.getElementById('res-selected-table')?.value;
         
         let html = '';
         for (let i = 1; i <= TOTAL_TABLES; i++) {
             const isOccupied = occupiedTables.has(i);
-            const isSelected = selectedTable == i;
+            const isSelected = type === 'res' ? (resSelectedTable == i) : (selectedTable == i);
             
-            if (type === 'cart') {
+            if (type === 'cart' || type === 'res') {
+                const clickFn = type === 'res' ? `selectResTable(${i})` : `selectTable(${i})`;
                 html += `
-                    <button onclick="${isOccupied ? '' : `selectTable(${i})`}" 
+                    <button onclick="${isOccupied && type !== 'res' ? '' : clickFn}" 
                         class="h-12 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border-2
-                        ${isOccupied ? 'bg-red-50 border-red-100 text-red-400 opacity-50 cursor-not-allowed' : 
+                        ${isOccupied && type !== 'res' ? 'bg-red-50 border-red-100 text-red-400 opacity-50 cursor-not-allowed' : 
                           isSelected ? 'bg-primary border-primary text-white shadow-lg' : 
                           'bg-white border-stone-100 text-stone-600 active:scale-95'}">
                         <span class="text-[10px] font-black">${i < 10 ? '0' + i : i}</span>
@@ -1029,6 +1031,7 @@ function renderTableGrids() {
     updateGrid('table-grid', 'profile');
     updateGrid('cart-table-grid', 'cart');
     updateGrid('home-table-grid', 'home');
+    updateGrid('res-table-grid', 'res');
     
     const availableCount = TOTAL_TABLES - occupiedTables.size;
     const badge = document.getElementById('tables-available-badge');
@@ -1049,6 +1052,51 @@ function renderTableGrids() {
     }
 }
 
+let resGuests = 2;
+
+function openReservation() {
+    document.getElementById('reservation-modal').classList.add('open');
+    const now = new Date();
+    document.getElementById('res-date').value = now.toISOString().split('T')[0];
+    document.getElementById('res-time').value = now.toTimeString().slice(0, 5);
+    setResGuests(2);
+    renderTableGrids();
+}
+
+function closeReservation() {
+    document.getElementById('reservation-modal').classList.remove('open');
+}
+
+function setResGuests(num) {
+    resGuests = num;
+    document.querySelectorAll('.res-guest-btn').forEach(btn => {
+        const isActive = btn.textContent.includes(num);
+        btn.classList.toggle('bg-primary', isActive);
+        btn.classList.toggle('text-white', isActive);
+        btn.classList.toggle('border-primary', isActive);
+        btn.classList.toggle('text-stone-600', !isActive);
+        btn.classList.toggle('border-stone-100', !isActive);
+    });
+}
+
+function selectResTable(num) {
+    document.getElementById('res-selected-table').value = num;
+    renderTableGrids();
+}
+
+function submitReservation() {
+    const date = document.getElementById('res-date').value;
+    const time = document.getElementById('res-time').value;
+    const table = document.getElementById('res-selected-table').value;
+    const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
+    
+    if (!table) { showToast("Please select a table"); return; }
+    
+    const msg = `*TABLE RESERVATION - KINARA SEA FOOD*\n\n*Name:* ${profile.name || '---'}\n*Phone:* ${profile.phone || '---'}\n*Date:* ${date}\n*Time:* ${time}\n*Guests:* ${resGuests}\n*Table:* ${table}\n\n_Please confirm my reservation._`;
+    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    closeReservation();
+}
+
 function selectTable(num) {
     const input = document.getElementById('table-number');
     if (input) {
@@ -1064,9 +1112,7 @@ function selectTableFromHome(num) {
 }
 
 function requestTableBooking() {
-    const profile = JSON.parse(localStorage.getItem('kinara_profile') || '{}');
-    const msg = `*TABLE BOOKING REQUEST - KINARA SEA FOOD*\n\n*Name:* ${profile.name || '---'}\n*Phone:* ${profile.phone || '---'}\n*Request:* I would like to book a table for today. Please confirm availability.\n\n_Sent via Kinara App_`;
-    window.open(`https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
+    openReservation();
 }
 
 // Initial calls
