@@ -319,26 +319,12 @@
                 </div>
                 <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span id="home-available-count" class="text-[9px] font-black text-green-700 uppercase tracking-tighter">12 Free</span>
+                    <span id="home-available-count" class="text-[9px] font-black text-green-700 uppercase tracking-tighter">-- Free</span>
                 </div>
             </div>
             
-            <div id="home-table-grid" class="grid grid-cols-4 sm:grid-cols-6 gap-3">
-                <!-- Tables 1-12 injected by JS -->
-            </div>
-
-            <div class="mt-5 pt-4 border-t border-stone-50 flex items-center justify-between">
-                <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_5px_#22c55e]"></div>
-                        <span class="text-[8px] font-black text-stone-400 uppercase">Available</span>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        <div class="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444] animate-pulse"></div>
-                        <span class="text-[8px] font-black text-stone-400 uppercase">Booked</span>
-                    </div>
-                </div>
-                <button onclick="openCart(); setOrderMode('DINE_IN')" class="text-[9px] font-black text-primary uppercase tracking-widest border-b border-primary/20 pb-0.5">Book Table Now</button>
+            <div id="home-table-grid" class="grid grid-cols-3 gap-4">
+                <!-- Tables 1-6 injected by JS -->
             </div>
         </div>
     </div>
@@ -553,7 +539,7 @@
                     <p class="text-[10px] font-black text-stone-500 uppercase tracking-widest">Select Your Table</p>
                     <p class="text-[9px] font-bold text-primary animate-pulse uppercase">Live Seating</p>
                 </div>
-                <div id="cart-table-grid" class="grid grid-cols-6 gap-2 bg-stone-50 p-4 rounded-[28px] border border-stone-100">
+                <div id="cart-table-grid" class="grid grid-cols-3 gap-2 bg-stone-50 p-4 rounded-[28px] border border-stone-100">
                     <!-- Injected by JS -->
                 </div>
                 <input id="table-number" type="hidden"> <!-- Keeping ID for logic consistency -->
@@ -690,19 +676,15 @@
                     <h4 class="text-xs font-black text-stone-900 uppercase tracking-widest">Live Seating</h4>
                     <p class="text-[9px] font-bold text-stone-400 uppercase tracking-tight mt-1">Real-time table status</p>
                 </div>
-                <div id="tables-available-badge" class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
+                <div class="flex items-center gap-2 bg-green-50 px-3 py-1.5 rounded-full border border-green-100">
                     <span class="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>
-                    <span id="tables-available-count" class="text-[9px] font-black text-green-700 uppercase">12 Available</span>
+                    <span id="tables-available-count" class="text-[9px] font-black text-green-700 uppercase">-- Available</span>
                 </div>
             </div>
             
-            <div id="table-grid" class="grid grid-cols-4 gap-3">
+            <div id="table-grid" class="grid grid-cols-3 gap-4">
                 <!-- Injected by JS -->
             </div>
-
-            <button onclick="requestTableBooking()" class="w-full mt-6 bg-white border border-stone-100 text-stone-600 py-4 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all">
-                <span class="material-symbols-outlined text-[18px]">whatsapp</span> Book via WhatsApp
-            </button>
         </div>
 
         <div class="space-y-4">

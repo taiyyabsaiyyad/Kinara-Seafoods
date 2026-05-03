@@ -973,7 +973,7 @@ function confirmDineinPaid(orderId) {
 }
 
 // Table Management Logic
-const TOTAL_TABLES = 12;
+const TOTAL_TABLES = 6;
 
 function renderTableGrids() {
     const ordersData = JSON.parse(localStorage.getItem('kinara_orders') || '[]');
@@ -984,7 +984,7 @@ function renderTableGrids() {
         }
     });
 
-    const updateGrid = (gridId, isCart) => {
+    const updateGrid = (gridId, type) => {
         const grid = document.getElementById(gridId);
         if (!grid) return;
         
@@ -995,32 +995,40 @@ function renderTableGrids() {
             const isOccupied = occupiedTables.has(i);
             const isSelected = selectedTable == i;
             
-            if (isCart) {
+            if (type === 'cart') {
                 html += `
                     <button onclick="${isOccupied ? '' : `selectTable(${i})`}" 
-                        class="h-10 rounded-xl flex items-center justify-center text-[10px] font-black transition-all border-2
+                        class="h-12 rounded-2xl flex flex-col items-center justify-center gap-1 transition-all border-2
                         ${isOccupied ? 'bg-red-50 border-red-100 text-red-400 opacity-50 cursor-not-allowed' : 
                           isSelected ? 'bg-primary border-primary text-white shadow-lg' : 
                           'bg-white border-stone-100 text-stone-600 active:scale-95'}">
-                        ${i < 10 ? '0' + i : i}
+                        <span class="text-[10px] font-black">${i < 10 ? '0' + i : i}</span>
                     </button>
                 `;
             } else {
                 html += `
-                    <div class="h-12 rounded-2xl flex flex-col items-center justify-center gap-1 border transition-all duration-500
-                        ${isOccupied ? 'bg-red-50 border-red-100 shadow-inner' : 'bg-white border-stone-100 shadow-sm'}">
-                        <span class="text-[9px] font-black ${isOccupied ? 'text-red-500' : 'text-stone-900'}">${i < 10 ? '0' + i : i}</span>
-                        <div class="w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 shadow-[0_0_8px_#ef4444] pulse-red' : 'bg-green-500 shadow-[0_0_8px_#22c55e]'}"></div>
-                    </div>
+                    <button onclick="${isOccupied ? `showToast('Table ${i} is busy')` : `selectTableFromHome(${i})`}" 
+                        class="h-20 rounded-[28px] flex flex-col items-center justify-center gap-2 border transition-all duration-300 relative overflow-hidden group active:scale-95
+                        ${isOccupied ? 'bg-stone-50 border-stone-100 shadow-inner' : 
+                          isSelected ? 'bg-primary/5 border-primary shadow-md' : 'bg-white border-stone-100 shadow-sm hover:shadow-md'}">
+                        
+                        <div class="absolute top-3 right-4 w-1.5 h-1.5 rounded-full ${isOccupied ? 'bg-red-500 shadow-[0_0_8px_#ef4444] pulse-red' : 'bg-green-500 shadow-[0_0_8px_#22c55e]'}"></div>
+                        
+                        <span class="material-symbols-outlined text-lg ${isOccupied ? 'text-stone-300' : isSelected ? 'text-primary' : 'text-stone-400'}">restaurant</span>
+                        <span class="text-[10px] font-black ${isOccupied ? 'text-stone-400' : 'text-stone-900'} uppercase tracking-widest">T-${i}</span>
+                        
+                        ${!isOccupied && !isSelected ? '<span class="text-[7px] font-bold text-green-500 uppercase">Book</span>' : ''}
+                        ${isSelected ? '<span class="text-[7px] font-bold text-primary uppercase">Active</span>' : ''}
+                    </button>
                 `;
             }
         }
         grid.innerHTML = html;
     };
 
-    updateGrid('table-grid', false);
-    updateGrid('cart-table-grid', true);
-    updateGrid('home-table-grid', false); // Update home map
+    updateGrid('table-grid', 'profile');
+    updateGrid('cart-table-grid', 'cart');
+    updateGrid('home-table-grid', 'home');
     
     const availableCount = TOTAL_TABLES - occupiedTables.size;
     const badge = document.getElementById('tables-available-badge');
@@ -1047,6 +1055,12 @@ function selectTable(num) {
         input.value = num;
         renderTableGrids();
     }
+}
+
+function selectTableFromHome(num) {
+    selectTable(num);
+    openCart();
+    showToast(`Table ${num} Selected! Ready to order.`);
 }
 
 function requestTableBooking() {
