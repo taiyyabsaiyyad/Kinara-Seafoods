@@ -75,18 +75,24 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Modal Transitions */
+        /* Modal Transitions — FIX: use visibility instead of display so opacity/transform can animate */
         .modal-overlay {
             position: fixed; inset: 0;
             background: rgba(0,0,0,0.5);
             backdrop-filter: blur(8px);
             z-index: 100;
-            display: none;
+            display: flex;
             align-items: flex-end;
+            visibility: hidden;
+            pointer-events: none;
             opacity: 0;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
         }
-        .modal-overlay.open { display: flex; opacity: 1; }
+        .modal-overlay.open {
+            visibility: visible;
+            pointer-events: auto;
+            opacity: 1;
+        }
         .modal-content {
             background: white;
             width: 100%;

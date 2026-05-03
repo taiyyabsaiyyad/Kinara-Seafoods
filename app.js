@@ -17,18 +17,15 @@ let orderMode = 'DELIVERY';
 let currentTip = 0;
 let map = null;
 let historyMap = null;
+let userCoords = null; // FIX: declare userCoords to prevent ReferenceError on init
 
 // Initialize the app
 function init() {
     loadProfile();
-    updateCart();
     renderCategories();
-    
-    // Defer menu and history rendering to prevent initial load lag
-    setTimeout(() => {
-        renderMenu();
-        renderOrdersHistory();
-    }, 100);
+    renderMenu();        // FIX: render immediately — no artificial delay needed
+    renderOrdersHistory();
+    updateCartBadge();  // FIX: only update badge on init, not full cart render
     
     // Global function bindings
     window.setOrderMode = setOrderMode;
@@ -389,16 +386,21 @@ function setCat(cat) {
     renderMenu();
 }
 
+// FIX: Single unified filterMenu with debounce AND banner update
+let searchTimer;
 function filterMenu() {
-    searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
-    const banner = document.getElementById('search-banner');
-    if (searchQuery) {
-        banner.classList.remove('hidden');
-        document.getElementById('search-banner-text').textContent = `Searching for "${searchQuery}"`;
-    } else {
-        banner.classList.add('hidden');
-    }
-    renderMenu();
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+        searchQuery = document.getElementById('search-input').value.toLowerCase().trim();
+        const banner = document.getElementById('search-banner');
+        if (searchQuery) {
+            banner.classList.remove('hidden');
+            document.getElementById('search-banner-text').textContent = `Searching for "${searchQuery}"`;
+        } else {
+            banner.classList.add('hidden');
+        }
+        renderMenu();
+    }, 300);
 }
 
 function clearSearch() {
@@ -416,15 +418,6 @@ function getFlattenedMenu() {
         });
     });
     return cachedMenuItems;
-}
-
-let searchTimer;
-function filterMenu() {
-    clearTimeout(searchTimer);
-    searchTimer = setTimeout(() => {
-        searchQuery = document.getElementById('search-input').value.toLowerCase();
-        renderMenu();
-    }, 300);
 }
 
 function renderMenu() {
@@ -473,8 +466,9 @@ function renderMenu() {
 
 function renderMenuItem(item, idx, cartMap) {
     const qty = cartMap.get(item.id);
+    // FIX: add data-item-id so updateMenuItemButton() can find this card without re-rendering
     return `
-        <div class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full group transition-all hover:shadow-xl active:scale-95 duration-500 border border-white/20 animate-slide-up" style="animation-delay: ${idx * 0.01}s">
+        <div class="glass-card rounded-[24px] overflow-hidden flex flex-col h-full group transition-all hover:shadow-xl active:scale-95 duration-500 border border-white/20 animate-slide-up" data-item-id="${item.id}" style="animation-delay: ${idx * 0.01}s">
             <div class="relative aspect-square overflow-hidden bg-stone-50/30">
                 <img src="${item.image}" loading="lazy" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" alt="${item.name}">
                 <div class="absolute top-3 right-3 veg-indicator ${item.isVeg ? 'veg' : 'non-veg'} shadow-sm"><div></div></div>
@@ -483,6 +477,7 @@ function renderMenuItem(item, idx, cartMap) {
                 <h4 class="font-bold text-stone-800 text-[11px] uppercase tracking-tight leading-tight mb-3 line-clamp-2">${item.name}</h4>
                 <div class="mt-auto flex items-center justify-between gap-2">
                     <span class="font-black text-stone-900 text-[13px]">${isNaN(parseFloat(item.price)) ? item.price : '₹' + item.price}</span>
+                    <div class="item-btn-area">
                     ${qty ? `
                         <div class="flex items-center gap-2 bg-stone-100/80 rounded-xl p-1 border border-stone-200/30 backdrop-blur-sm">
                             <button onclick="changeQty('${item.id}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-900 font-bold bg-white rounded-lg shadow-sm active:scale-90 transition-all text-xs">−</button>
@@ -490,6 +485,7 @@ function renderMenuItem(item, idx, cartMap) {
                             <button onclick="changeQty('${item.id}', 1)" class="w-6 h-6 flex items-center justify-center text-white font-bold bg-primary rounded-lg shadow-sm active:scale-90 transition-all text-xs">+</button>
                         </div>
                     ` : `<button onclick="addToCart('${item.id}')" class="bg-stone-900 text-white px-4 py-2 rounded-xl font-black text-[9px] active:scale-95 transition-all uppercase tracking-widest shadow-lg shadow-stone-900/10">Add</button>`}
+                    </div>
                 </div>
             </div>
         </div>
@@ -497,42 +493,93 @@ function renderMenuItem(item, idx, cartMap) {
 }
 
 function addToCart(itemId) {
-    let item;
-    menuData.categories.forEach(cat => { const found = cat.items.find(i => i.id === itemId); if (found) item = found; });
-    if (item) { cart.push({ ...item, qty: 1 }); updateCart(); showToast(`Added ${item.name}`); }
+    // FIX: use flat cache O(1) instead of nested category search
+    const item = getFlattenedMenu().find(i => i.id === itemId);
+    if (!item) return;
+    const existing = cart.find(c => c.id === itemId);
+    if (existing) {
+        existing.qty += 1;
+    } else {
+        cart.push({ ...item, qty: 1 });
+    }
+    updateCart(itemId);
+    showToast(`Added ${item.name}`);
 }
 
 function changeQty(itemId, delta) {
     const idx = cart.findIndex(c => c.id === itemId);
-    if (idx > -1) { cart[idx].qty += delta; if (cart[idx].qty <= 0) cart.splice(idx, 1); updateCart(); }
+    if (idx > -1) {
+        cart[idx].qty += delta;
+        if (cart[idx].qty <= 0) cart.splice(idx, 1);
+    }
+    updateCart(itemId);
 }
 
 function getPrice(price) { return isNaN(parseFloat(price)) ? 0 : parseFloat(price); }
 
-function updateCart() {
+// FIX: updateCart now accepts an optional itemId to surgically update only that card's button
+// This eliminates the full menu re-render on every cart change — the main source of mobile lag
+function updateCart(itemId) {
     localStorage.setItem('kinara_cart', JSON.stringify(cart));
+    updateCartBadge();
+    renderCartItems();
+    // FIX: only patch the specific menu card button instead of rebuilding the whole grid
+    if (itemId !== undefined) {
+        updateMenuItemButton(itemId);
+    }
+}
+
+function updateCartBadge() {
     const count = cart.reduce((acc, item) => acc + item.qty, 0);
-    const { itemTotal, deliveryFee, tip, grandTotal, distance } = calculateCartTotals();
-    
+    const { itemTotal, deliveryFee, grandTotal, distance } = calculateCartTotals();
+
     const badge = document.getElementById('cart-badge');
     if (badge) {
         if (count > 0) {
-            badge.textContent = count; badge.classList.remove('hidden');
-            badge.classList.add('cart-pop'); setTimeout(() => badge.classList.remove('cart-pop'), 300);
-        } else { badge.classList.add('hidden'); }
+            badge.textContent = count;
+            badge.classList.remove('hidden');
+            badge.classList.add('cart-pop');
+            setTimeout(() => badge.classList.remove('cart-pop'), 300);
+        } else {
+            badge.classList.add('hidden');
+        }
     }
 
-    if (document.getElementById('cart-items-amt')) document.getElementById('cart-items-amt').textContent = `₹${itemTotal}`;
-    if (document.getElementById('delivery-amt')) document.getElementById('delivery-amt').textContent = `₹${deliveryFee}`;
-    if (document.getElementById('cart-total-amt')) document.getElementById('cart-total-amt').textContent = `₹${grandTotal}`;
-    
-    if (document.getElementById('delivery-label')) {
-        if (userCoords) document.getElementById('delivery-label').textContent = `Delivery (${distance.toFixed(1)} KM)`;
-        else document.getElementById('delivery-label').textContent = `Delivery Fee`;
+    const itemsAmt = document.getElementById('cart-items-amt');
+    const deliveryAmt = document.getElementById('delivery-amt');
+    const totalAmt = document.getElementById('cart-total-amt');
+    const deliveryLabel = document.getElementById('delivery-label');
+
+    if (itemsAmt) itemsAmt.textContent = `₹${itemTotal}`;
+    if (deliveryAmt) deliveryAmt.textContent = `₹${deliveryFee}`;
+    if (totalAmt) totalAmt.textContent = `₹${grandTotal}`;
+    if (deliveryLabel) {
+        deliveryLabel.textContent = userCoords ? `Delivery (${distance.toFixed(1)} KM)` : `Delivery Fee`;
     }
-    
-    renderCartItems();
-    renderMenu();
+}
+
+// FIX: surgically updates only one menu card's add/qty button without re-rendering the grid
+function updateMenuItemButton(itemId) {
+    const cartEntry = cart.find(c => c.id === itemId);
+    const qty = cartEntry ? cartEntry.qty : 0;
+
+    // Find the button/control in the menu grid by data attribute
+    const card = document.querySelector(`[data-item-id="${itemId}"]`);
+    if (!card) return;
+
+    const btnArea = card.querySelector('.item-btn-area');
+    if (!btnArea) return;
+
+    if (qty > 0) {
+        btnArea.innerHTML = `
+            <div class="flex items-center gap-2 bg-stone-100/80 rounded-xl p-1 border border-stone-200/30 backdrop-blur-sm">
+                <button onclick="changeQty('${itemId}', -1)" class="w-6 h-6 flex items-center justify-center text-stone-900 font-bold bg-white rounded-lg shadow-sm active:scale-90 transition-all text-xs">−</button>
+                <span class="font-black text-primary text-[11px] w-4 text-center">${qty}</span>
+                <button onclick="changeQty('${itemId}', 1)" class="w-6 h-6 flex items-center justify-center text-white font-bold bg-primary rounded-lg shadow-sm active:scale-90 transition-all text-xs">+</button>
+            </div>`;
+    } else {
+        btnArea.innerHTML = `<button onclick="addToCart('${itemId}')" class="bg-stone-900 text-white px-4 py-2 rounded-xl font-black text-[9px] active:scale-95 transition-all uppercase tracking-widest shadow-lg shadow-stone-900/10">Add</button>`;
+    }
 }
 
 function renderCartItems() {
