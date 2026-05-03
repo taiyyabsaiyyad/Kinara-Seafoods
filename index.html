@@ -219,6 +219,30 @@
             </div>
         </div>
         <div class="flex items-center gap-2">
+            <!-- Classy White Clock Widget -->
+            <div class="flex items-center gap-2.5 bg-white px-3 py-1.5 rounded-2xl shadow-[0_8px_20px_rgba(226,55,68,0.1)] border border-stone-100 transition-all active:scale-95">
+                <!-- Day & Date -->
+                <div class="flex flex-col justify-center border-r border-stone-100 pr-2">
+                    <p id="header-live-day" class="text-[7px] font-black text-stone-400 uppercase tracking-widest leading-none mb-0.5">--</p>
+                    <p id="header-live-date" class="text-[8px] font-black text-stone-900 uppercase tracking-tighter leading-none">-- ---</p>
+                </div>
+                
+                <!-- Time with Seconds -->
+                <div class="flex items-baseline gap-0.5">
+                    <p id="header-live-time" class="text-base font-black text-primary tracking-tighter tabular-nums leading-none">--:--</p>
+                    <div class="flex flex-col justify-start">
+                        <span id="header-live-ampm" class="text-[7px] font-black text-primary uppercase leading-none mb-0.5">--</span>
+                        <span id="header-live-sec" class="text-[7px] font-bold text-stone-300 tabular-nums leading-none">--</span>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="flex items-center gap-1.5 bg-stone-50 px-2 py-1 rounded-lg border border-stone-100 ml-1">
+                    <div id="header-shop-dot" class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+                    <span id="header-shop-text" class="text-[7px] font-black text-green-600 uppercase tracking-tighter">OPEN</span>
+                </div>
+            </div>
+            
             <button onclick="window.location.href='tel:917045528239'" class="w-10 h-10 bg-white/70 rounded-full flex items-center justify-center border border-stone-200/50 text-stone-600 active:scale-95 transition-all shadow-sm">
                 <span class="material-symbols-outlined text-[20px]">call</span>
             </button>
@@ -683,6 +707,31 @@
                     <p class="text-sm font-extrabold text-stone-900">Kinara Express 🌊</p>
                     <p class="text-[10px] font-bold text-green-600">On the way to you ●</p>
                 </div>
+
+                <!-- Classy White Clock Widget (Tracking Modal) -->
+                <div class="flex items-center gap-2.5 bg-white px-3 py-1.5 rounded-2xl shadow-md border border-stone-100 flex-shrink-0">
+                    <!-- Day & Date -->
+                    <div class="flex flex-col justify-center border-r border-stone-100 pr-2">
+                        <p id="live-day" class="text-[7px] font-black text-stone-400 uppercase tracking-widest leading-none mb-0.5">--</p>
+                        <p id="live-date" class="text-[8px] font-black text-stone-900 uppercase tracking-tighter leading-none">-- ---</p>
+                    </div>
+                    
+                    <!-- Time with Seconds -->
+                    <div class="flex items-baseline gap-0.5">
+                        <p id="live-time" class="text-base font-black text-primary tracking-tighter tabular-nums leading-none">--:--</p>
+                        <div class="flex flex-col justify-start">
+                            <span id="live-ampm" class="text-[7px] font-black text-primary uppercase leading-none mb-0.5">--</span>
+                            <span id="live-sec" class="text-[7px] font-bold text-stone-300 tabular-nums leading-none">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="flex items-center gap-1.5 bg-stone-50 px-2 py-1 rounded-lg border border-stone-100 ml-1">
+                        <div id="shop-dot" class="w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse"></div>
+                        <span id="shop-text" class="text-[7px] font-black text-green-600 uppercase tracking-tighter">OPEN</span>
+                    </div>
+                </div>
+
                 <button onclick="window.location.href='tel:917045528239'" class="flex-shrink-0 w-10 h-10 bg-primary text-white rounded-xl flex items-center justify-center shadow-lg shadow-primary/10 active:scale-95 transition-all">
                     <span class="material-symbols-outlined text-[20px]">call</span>
                 </button>

@@ -61,6 +61,9 @@ function init() {
     window.closeDeliveredOverlay = closeDeliveredOverlay;
     window.sharePaymentSS = sharePaymentSS;
     window.confirmDineinPaid = confirmDineinPaid;
+    
+    // Start live tracker
+    startLiveStatusTracker();
 }
 
 document.addEventListener('DOMContentLoaded', init);
@@ -479,6 +482,61 @@ function confirmDineinPaid(orderId) {
         renderOrdersHistory(); // Update list to hide QR card
         showThankYouOverlay(true);
     }, 700);
+}
+
+// Live Time & Shop Status Tracker
+function startLiveStatusTracker() {
+    function update() {
+        const now = new Date();
+        const dayName = now.toLocaleDateString('en-IN', { weekday: 'long' });
+        const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short' });
+        const hours = now.getHours();
+        const mins = now.getMinutes();
+        const secs = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        const displayHours = (hours % 12 || 12).toString().padStart(2, '0');
+        const displayMins = mins.toString().padStart(2, '0');
+        const timeStr = `${displayHours}:${displayMins}`;
+
+        // Shop Hours: 11:30 AM to 11:30 PM
+        const currentTotalMins = (hours * 60) + mins;
+        const openMins = (11 * 60) + 30;
+        const closeMins = (23 * 60) + 30;
+        const isOpen = currentTotalMins >= openMins && currentTotalMins <= closeMins;
+
+        const updateEl = (prefix) => {
+            const dayEl = document.getElementById(`${prefix}live-day`);
+            const dateEl = document.getElementById(`${prefix}live-date`);
+            const timeEl = document.getElementById(`${prefix}live-time`);
+            const ampmEl = document.getElementById(`${prefix}live-ampm`);
+            const secEl = document.getElementById(`${prefix}live-sec`);
+            const dotEl = document.getElementById(`${prefix}shop-dot`);
+            const textEl = document.getElementById(`${prefix}shop-text`);
+            
+            if (dayEl) dayEl.textContent = dayName;
+            if (dateEl) dateEl.textContent = dateStr;
+            if (timeEl) timeEl.textContent = timeStr;
+            if (ampmEl) ampmEl.textContent = ampm;
+            if (secEl) secEl.textContent = secs;
+
+            if (dotEl && textEl) {
+                if (isOpen) {
+                    dotEl.className = 'w-1.5 h-1.5 rounded-full bg-green-500 shadow-[0_0_8px_#22c55e] animate-pulse';
+                    textEl.textContent = 'OPEN';
+                    textEl.className = 'text-[7px] font-black text-green-600 uppercase tracking-tighter';
+                } else {
+                    dotEl.className = 'w-1.5 h-1.5 rounded-full bg-red-500 shadow-[0_0_8px_#ef4444]';
+                    textEl.textContent = 'CLOSED';
+                    textEl.className = 'text-[7px] font-black text-red-600 uppercase tracking-tighter';
+                }
+            }
+        };
+
+        updateEl(''); // Tracking modal
+        updateEl('header-'); // Header
+    }
+    update();
+    setInterval(update, 1000);
 }
 
 function renderCategories() {
